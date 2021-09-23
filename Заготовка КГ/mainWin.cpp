@@ -8,6 +8,7 @@
 
 #define MAX_LOADSTRING 100
 #define ID_CREATE 160
+#define ID_FIRSTCHILD	161
 // Глобальные переменные:
 HINSTANCE hInst;                                // текущий экземпляр
 WCHAR szTitle[MAX_LOADSTRING] = L"Компьютерная графика";;                  // Текст строки заголовка
@@ -21,7 +22,7 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    Create(HWND, UINT, WPARAM, LPARAM);
-
+LRESULT CALLBACK ChildProc(HWND, UINT, WPARAM, LPARAM);
 //Добавление отрисовщика
 
 
@@ -166,7 +167,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         AppendMenu(MainMenu, MF_STRING, IDM_ABOUT, L"&О программе");
         SetMenu(hWnd, MainMenu);
 
-       
+        
 
         }
 
@@ -178,6 +179,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             switch (wmId)
             {
             case ID_CREATE:
+
                 DialogBoxW(hInst, MAKEINTRESOURCE(IDR_MAINFRAME), hWnd, Create);
                 break;
             case IDM_ABOUT:
@@ -214,12 +216,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 			// Рисование линии
-			SetLine(frameBuffer, frameWidth, { 0,0,255,0 });
+			
 			//V_FP1(frameBuffer, frameWidth, &pointer[0].x, { 0,255,0,0 });
 
             // Мои добавления
-            //PresentFrame(hdc, frameWidth, frameHeight, frameBuffer, hWnd);
-			
+            PresentFrame(hdc, frameWidth, frameHeight, frameBuffer, hWnd);
+            SetLine(frameBuffer, frameWidth, { 0,0,255,0 });
             EndPaint(hWnd, &ps);
         }
         break;
@@ -252,23 +254,54 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return (INT_PTR)FALSE;
 }
 
+// Обработчик сообщений для окна "Создать".
 INT_PTR CALLBACK Create(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
+
     switch (message)
     {
     case WM_INITDIALOG:
+       
         return (INT_PTR)TRUE;
-
+    case WM_CREATE:
+        /*
+        WNDCLASS w;
+        memset(&w, 0, sizeof(WNDCLASS));
+        w.lpfnWndProc = ChildProc;
+        w.hInstance = hInst;
+        w.hbrBackground = WHITE_BRUSH;
+        w.lpszClassName = L"&ChildWClass";
+        w.hCursor = LoadCursor(NULL, IDC_CROSS);
+        RegisterClass(&w);
+        HWND child;
+        child = CreateWindowEx(0, L"&ChildWClass", (LPCTSTR)NULL,
+            WS_CHILD | WS_BORDER | WS_VISIBLE, 10, 10,
+            50, 50, hDlg, (HMENU)(int)(ID_FIRSTCHILD), hInst, NULL);
+        ShowWindow(child, SW_NORMAL);
+        UpdateWindow(child);
+        EndDialog(hDlg, LOWORD(wParam));
+        */
+        break;
     case WM_COMMAND:
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
-            EndDialog(hDlg, LOWORD(wParam));
+            
             return (INT_PTR)TRUE;
         }
+        
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+LRESULT CALLBACK ChildProc(HWND hwnd, UINT Message, WPARAM wparam, LPARAM lparam)
+{
+    if (Message == WM_DESTROY)
+    {
+        return 0;
+    }
+    return DefWindowProc(hwnd, Message, wparam, lparam);
 }
 
 /**
