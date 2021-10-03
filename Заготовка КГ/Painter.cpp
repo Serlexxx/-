@@ -1,6 +1,7 @@
 #include "Painter.h"
+using namespace std;
 
-Point point;
+
 /**
 * \brief Создание буфера кадра (двумерный массив структур RGBQUAD)
 * \param width Ширина буфера кадра
@@ -26,7 +27,7 @@ RGBQUAD* CreateFrameBuffer(uint32_t width, uint32_t height, RGBQUAD clearColor)
 */
 void ClearFrame(RGBQUAD* buffer, uint32_t pixelCount, RGBQUAD clearColor)
 {
-	std::fill_n(buffer, pixelCount, clearColor);
+	fill_n(buffer, pixelCount, clearColor);
 }
 
 /**
@@ -55,11 +56,11 @@ void SetPoint(RGBQUAD* buffer, int x, int y, uint32_t w, RGBQUAD color)
 * \param w Ширина фрейм-буфера
 * \param color Очистка цвета
 */
-void SetLine(RGBQUAD* buffer, uint32_t w, RGBQUAD color)
+void SetLine(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
 {
 	int j = 0;
-	for (int i = 0; i < point.setApex(); i++) {
-		i < (point.setApex() - 1) ? j++ : j = 0;
+	for (int i = 0; i < point.SetApex(); i++) {
+		i < (point.SetApex() - 1) ? j++ : j = 0;
 		double const deltaX = abs(point.pointer[i].x - point.pointer[j].x);
 		double const deltaY = abs(point.pointer[i].y - point.pointer[j].y);
 		double x_1, x_2, y_1, y_2;
@@ -137,7 +138,7 @@ void SetLine(RGBQUAD* buffer, uint32_t w, RGBQUAD color)
 * \param height Высота рабочей области
 * \param width Ширина рабочей области
 * */
-void MatrixMultiplication(double k, double height, double width)
+void MatrixMultiplication(double k, double height, double width, Point & point)
 {
 	int check = 0;
 	struct Prod
@@ -145,12 +146,12 @@ void MatrixMultiplication(double k, double height, double width)
 		double x, y;
 	};
 
-	Prod* ResProd = new Prod[point.setApex()];
+	Prod* ResProd = new Prod[point.SetApex()];
 	int diag = 0;
-	double cnt_apex = point.setApex();
+	double cnt_apex = point.SetApex();
 	double Dx, Dy;
 
-	if (point.setApex() % 2 == 1) {
+	if (point.SetApex() % 2 == 1) {
 		while (cnt_apex != 1) {
 			cnt_apex -= 2;
 			diag++;
@@ -161,10 +162,10 @@ void MatrixMultiplication(double k, double height, double width)
 		Dy = (point.pointer[diag].y + Dy_0) / 3;
 	}
 	else {
-		Dx = (point.pointer[0].x + point.pointer[point.setApex() / 2].x) / 2;
-		Dy = (point.pointer[0].y + point.pointer[point.setApex() / 2].y) / 2;
+		Dx = (point.pointer[0].x + point.pointer[point.SetApex() / 2].x) / 2;
+		Dy = (point.pointer[0].y + point.pointer[point.SetApex() / 2].y) / 2;
 	}
-	for (int cnt = 0; cnt < point.setApex(); cnt++) {
+	for (int cnt = 0; cnt < point.SetApex(); cnt++) {
 
 
 		double aMatrix[1][3] = { {point.pointer[cnt].x, point.pointer[cnt].y, 1} };
@@ -175,9 +176,9 @@ void MatrixMultiplication(double k, double height, double width)
 				for (int inner = 0; inner < 3; inner++) {
 					product[i][j] += floor(aMatrix[i][inner] * bMatrix[inner][j]);
 				}
-				//std::cout << product[i][j] << "  ";
+				//cout << product[i][j] << "  ";
 			}
-			//std::cout << std::endl;
+			//cout << endl;
 		}
 		ResProd[cnt].y = product[0][1];
 		ResProd[cnt].x = product[0][0];
@@ -191,22 +192,22 @@ void MatrixMultiplication(double k, double height, double width)
 	}
 	if (check == APEX) {
 		for (int i = 0; i < APEX; i++) {
-			std::cout << ResProd[i].x << " x " << ResProd[i].y << std::endl;
+			cout << ResProd[i].x << " x " << ResProd[i].y << endl;
 			pointer[i].x = ResProd[i].x;
 			pointer[i].y = ResProd[i].y;
 		}
 	}
 	else {
-		std::cout << "EROR: Border Reached" << std::endl;
+		cout << "EROR: Border Reached" << endl;
 		for (int i = 0; i < APEX; i++) {
-			std::cout << ResProd[i].x << " x " << ResProd[i].y << std::endl;
+			cout << ResProd[i].x << " x " << ResProd[i].y << endl;
 		}
-		std::cout << std::endl;
+		cout << endl;
 	}
 	*/
 	}
-	for (int i = 0; i < point.setApex(); i++) {
-		std::cout << ResProd[i].x << " x " << ResProd[i].y << std::endl;
+	for (int i = 0; i < point.SetApex(); i++) {
+		cout << ResProd[i].x << " x " << ResProd[i].y << endl;
 		point.pointer[i].x = ResProd[i].x;
 		point.pointer[i].y = ResProd[i].y;
 	}
@@ -217,13 +218,13 @@ void MatrixMultiplication(double k, double height, double width)
 * \param height Высота рабочей области
 * \param width Ширина рабочей области
 * */
-void Rotate(double angle, double height, double width)
+void Rotate(double angle, double height, double width, Point &point)
 {
-	int cnt_apex = point.setApex();
+	int cnt_apex = point.SetApex();
 	int diag = 0;
 	double Dx, Dy;
 
-	if (point.setApex() % 2 == 1) {
+	if (point.SetApex() % 2 == 1) {
 		while (cnt_apex != 1) {
 			cnt_apex -= 2;
 			diag++;
@@ -234,18 +235,18 @@ void Rotate(double angle, double height, double width)
 		Dy = (point.pointer[diag].y + Dy_0) / 3;
 	}
 	else {
-		Dx = (point.pointer[0].x + point.pointer[point.setApex() / 2].x) / 2;
-		Dy = (point.pointer[0].y + point.pointer[point.setApex() / 2].y) / 2;
+		Dx = (point.pointer[0].x + point.pointer[point.SetApex() / 2].x) / 2;
+		Dy = (point.pointer[0].y + point.pointer[point.SetApex() / 2].y) / 2;
 	}
 
 	struct RadPoints
 	{
 		double xR, yR;
 	};
-	RadPoints *massiv = new RadPoints[point.setApex()];
+	RadPoints *massiv = new RadPoints[point.SetApex()];
 	int check = 0;
 
-	for (int i = 0; i < point.setApex(); i++) {
+	for (int i = 0; i < point.SetApex(); i++) {
 		double x = point.pointer[i].x;
 		double y = point.pointer[i].y;
 		//massiv[i].xR 
@@ -266,32 +267,34 @@ void Rotate(double angle, double height, double width)
 		}
 	}
 	else {
-		std::cout << "EROR: Border Reached" << std::endl;
+		cout << "EROR: Border Reached" << endl;
 	}*/
 }
 
+/**
 
-/*
-* Заливает строку iy от ixn до ixk
-*/
+
+
+// Заливает строку iy от ixn до ixk
+
 void FILSTR(RGBQUAD* buffer, uint32_t w, int iy, int ixn, int ixk, RGBQUAD color) {
 	while (ixn <= ixk) SetPoint(buffer, ixn++, iy, w, color);
-} /* FILSTR */
+} // FILSTR
 
 static double* pt;
 
-static int NextApex;	/* Номер следующей вершины в списке */
-double* yUP = new double[point.setApex()];	/*Y-коориданты вершин по возрастанию */
-int* yNumb = new int[point.setApex()]; /* их номера */
+static int NextApex;	//Номер следующей вершины в списке 
+double* yUP = new double[point.SetApex()];	//Y-коориданты вершин по возрастанию 
+int* yNumb = new int[point.SetApex()]; // их номера 
 
-/*Список активных ребер*/
-static int IDLSPI;			/*Длина списка активных ребер*/
-static int IYREB[300];		/*Макс Y-коорд активных ребер*/
-static double RXREB[300];	/*Тек X-коорд акивных ребер*/
-static double RPRIP[300];	/*X-приращение на 1 шаг по Y*/
-static double RYSL[300];	/*Dy между тек и соседн верш */
-							/*Dy <= 0.0 - обычная вершина */
-							/*	  > 0.0 - локал эксремум */
+//Список активных ребер
+static int IDLSPI;			//Длина списка активных ребер
+static int IYREB[300];		//Макс Y-коорд активных ребер
+static double RXREB[300];	//Тек X-коорд акивных ребер
+static double RPRIP[300];	//X-приращение на 1 шаг по Y
+static double RYSL[300];	//Dy между тек и соседн верш 
+							//Dy <= 0.0 - обычная вершина 
+							//	  > 0.0 - локал эксремум 
 
 static int FORSPI(RGBQUAD* buffer, uint32_t w, int IYBEG, RGBQUAD color) {
 	int i, ikledg, intek, intabs, isd;
@@ -299,7 +302,7 @@ static int FORSPI(RGBQUAD* buffer, uint32_t w, int IYBEG, RGBQUAD color) {
 	double xt, xc, yt, yc, dy;
 
 	ikledg = 0;
-	for (i = NextApex; i < point.setApex(); ++i)
+	for (i = NextApex; i < point.SetApex(); ++i)
 		if (yUP[i] != IYBEG) break; else ikledg++;
 
 	for (i = 0; i < ikledg; i++) {
@@ -308,8 +311,8 @@ static int FORSPI(RGBQUAD* buffer, uint32_t w, int IYBEG, RGBQUAD color) {
 		xt = pt[intabs - 1];
 		yt = pt[intabs];
 
-		if ((inpred = intabs - 2) < 0) inpred = yNumb[(point.setApex() - 1)]; //правка - APEX*2-1
-		if ((inposl = intabs + 2) > (point.setApex() * 2 - 1)) inposl = yNumb[0]; //правка - 1
+		if ((inpred = intabs - 2) < 0) inpred = yNumb[(point.SetApex() - 1)]; //правка - APEX*2-1
+		if ((inposl = intabs + 2) > (point.SetApex() * 2 - 1)) inposl = yNumb[0]; //правка - 1
 
 		for (isd = 0; isd < 2; isd += 2) {
 			if (!isd) nrebra = inc = inpred;
@@ -339,14 +342,14 @@ static int FORSPI(RGBQUAD* buffer, uint32_t w, int IYBEG, RGBQUAD color) {
 			++IDLSPI;
 		}
 	}
-	if ((i = (NextApex += ikledg)) > (point.setApex() - 1)) i = (point.setApex() - 1);
+	if ((i = (NextApex += ikledg)) > (point.SetApex() - 1)) i = (point.SetApex() - 1);
 	return(yUP[i]);
 }
 
-/*
-* Однотонно заливает многоугольник,
-* заданный координатами вершин
-*/
+//
+// Однотонно заливает многоугольник,
+//заданный координатами вершин
+
 void V_FP1(RGBQUAD* buffer, uint32_t w, double* Pt, RGBQUAD color) {
 	int i, j, k, l;
 	int iytek = 0;
@@ -361,27 +364,27 @@ void V_FP1(RGBQUAD* buffer, uint32_t w, double* Pt, RGBQUAD color) {
 
 	memset(irabx, 0, 300 * 4);
 	pt = Pt;
-	/*Построение массивов У и их номеров*/
+	//Построение массивов У и их номеров
 	int cnt = 0;
-	for (i = 1; i < (point.setApex() * 2); i += 2) {
+	for (i = 1; i < (point.SetApex() * 2); i += 2) {
 		yUP[cnt] = *(pt + i);
 		yNumb[cnt] = i;
 		cnt++;
 	}
-	/*Сортировка*/
+	//Сортировка
 
 	bool sort_or_not = 1;
 
 	do {
 		sort_or_not = 1;
-		for (int i = 0; i < (point.setApex() - 1); i++) { // n - размер сортируемого массива
+		for (int i = 0; i < (point.SetApex() - 1); i++) { // n - размер сортируемого массива
 			if (yUP[i] > yUP[i + 1]) {
 				swaping(yUP[i], yUP[i + 1]);
 				swaping_int(yNumb[i], yNumb[i + 1]);
 				sort_or_not = 1;
 			}
 		}
-		for (int i = (point.setApex() - 1); i >= 1; i--) {
+		for (int i = (point.SetApex() - 1); i >= 1; i--) {
 			if (yUP[i] < yUP[i - 1]) {
 				swaping(yUP[i], yUP[i - 1]);
 				swaping_int(yNumb[i], yNumb[i - 1]);
@@ -404,12 +407,12 @@ void V_FP1(RGBQUAD* buffer, uint32_t w, double* Pt, RGBQUAD color) {
 			yNumb[k] = yNumb[i]; yNumb[i] = iymin;
 		}
 	}
-	*/
-	/*Начальные присвоения*/
+	
+	//Начальные присвоения
 	IDLSPI = 0;
 	NextApex = 0;
 	iybeg = yUP[0];
-	iymak = yUP[point.setApex() - 1];
+	iymak = yUP[point.SetApex() - 1];
 
 	iysled = FORSPI(buffer, w, iybeg, color);
 	if (!IDLSPI) goto KOHGFA;
@@ -457,7 +460,7 @@ WYBROSILI:
 	goto ZALIWKA;
 KOHGFA:;
 }
-
+*/
 void swaping(double& one, double& two) {
 	double three = one;
 	one = two;

@@ -1,20 +1,36 @@
 #include "Point.h"
-using namespace std;
-void Point::getApex(int Apex) {
-	APEX = (Apex > 0 ? Apex : 3);
+#define PLUS_X 20
+#define PLUS_Y 200
+
+void Point::GetApex() {
+	APEX = 4;
 }
 
-int Point::deApex(int count) {
-	APEX -= count;
-	return APEX;
-}
 
-void Point::getPoint() {
-	for (int i = 0; i++; i < APEX-1) {
-		cin >> pointer[i].x >> pointer[i].y;
+void Point::GetPoint() {
+	for (int i = 1; i < 3; i++) {
+		switch (i)
+		{
+		case 1: {
+			pointer[0].x = 10;
+			pointer[1].x = 60;
+			pointer[0].y = 10;
+			pointer[1].y = 60;
+			break;
+		}
+		case 2: {
+			pointer[2].y = pointer[1].y + PLUS_Y;
+			pointer[3].y = pointer[0].y + PLUS_Y;
+			pointer[2].x = pointer[1].x + PLUS_X;
+			pointer[3].x = pointer[0].x + PLUS_X;
+			break;
+		}
+		}
 	}
 }
 
-int Point::setApex() {
+int Point::SetApex() const {
 	return APEX;
 }
+
+
