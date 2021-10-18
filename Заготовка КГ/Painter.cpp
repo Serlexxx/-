@@ -1,7 +1,6 @@
 #include "Painter.h"
 using namespace std;
 
-
 /**
 * \brief Создание буфера кадра (двумерный массив структур RGBQUAD)
 * \param width Ширина буфера кадра
@@ -44,6 +43,48 @@ void SetPoint(RGBQUAD* buffer, int x, int y, uint32_t w, RGBQUAD color)
 	buffer[(y * w) + x] = color;
 }
 
+/**
+ * \brief Отрисовка кадра
+ * \param width Ширина
+ * \param height Высота
+ * \param pixels Массив пикселов
+ * \param hWnd Хендл окна, device context которого будет использован
+ */
+void PresentFrame(HDC hdc, uint32_t width, uint32_t height, void* pixels, HWND hWnd)
+{
+	// Получить хендл на временный bit-map (4 байта на пиксель)
+	HBITMAP hBitMap = CreateBitmap(width, height, 1, 8 * 4, pixels);
+
+	// Временный DC для переноса bit-map'а
+	HDC srcHdc = CreateCompatibleDC(hdc);
+
+	// Связать bit-map с временным DC
+	SelectObject(srcHdc, hBitMap);
+
+	// Копировать содержимое временного DC в DC окна
+	BitBlt(
+		hdc,    // HDC назначения
+		0,      // Начало вставки по оси X
+		0,      // Начало вставки по оси Y
+		width,  // Ширина
+		height, // Высота
+		srcHdc, // Исходный HDC (из которого будут копироваться данные)
+		0,      // Начало считывания по оси X
+		0,      // Начало считывания по оси Y
+		SRCCOPY // Копировать
+	);
+	//Sleep(10000);
+	// Уничтожить bit-map
+	DeleteObject(hBitMap);
+	// Уничтодить временный DC
+	DeleteDC(srcHdc);
+	// Уничтодить DC
+	DeleteDC(hdc);
+	ReleaseDC(hWnd, hdc);
+	//PostQuitMessage(0);
+}
+
+
 
 
 /**
@@ -70,6 +111,94 @@ void SetLine(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
 		x_2 = point.pointer[j].x;
 		y_1 = point.pointer[i].y;
 		y_2 = point.pointer[j].y;
+
+		if (deltaX > deltaY) {
+			inc1 = 2 * deltaY;
+			inc2 = 2 * (deltaY - deltaX);
+			d = 2 * deltaY - deltaX;
+			if (x_1 < x_2) {
+				x = x_1; y = y_1; xend = x_2;
+				(y_1 < y_2) ? s = 1 : s = -1;
+			}
+			else {
+				x = x_2;
+				y = y_2;
+				xend = x_1;
+				(y_1 > y_2) ? s = 1 : s = -1;
+			}
+
+			SetPoint(buffer, x, y, w, color);
+			while (x < xend) {
+				x++;
+				if (d > 0) {
+					y += s;
+					d += inc2;
+				}
+				else
+					d += inc1;
+
+				SetPoint(buffer, x, y, w, color);
+			}
+		}
+		else {
+			inc1 = 2 * deltaX;
+			inc2 = 2 * (deltaX - deltaY);
+			d = 2 * deltaX - deltaY;
+			if (y_1 < y_2) {
+				y = y_1;
+				x = x_1;
+				yend = y_2;
+				(x_1 < x_2) ? s = 1 : s = -1;
+			}
+			else {
+				y = y_2;
+				x = x_2;
+				yend = y_1;
+				(x_1 > x_2) ? s = 1 : s = -1;
+			}
+
+			SetPoint(buffer, x, y, w, color);
+			while (y < yend) {
+				y++;
+				if (d > 0) {
+					x += s;
+					d += inc2;
+				}
+				else
+					d += inc1;
+
+				SetPoint(buffer, x, y, w, color);
+			}
+
+		}
+	}
+}
+
+//to do:: объединить построении линий в один setline
+/**
+* \brief Рисование линии (быстрый вариант, алгоритм Брэзенхема)
+* \param buffer Буфер кадра (указатель на массив)
+* \param x0 Начальная точка (компонента X)
+* \param y0 Начальная точка (компонента Y)
+* \param x1 Конечная точка (компонента X)
+* \param y1 Конечная точка (компонента Y)
+* \param w Ширина фрейм-буфера
+* \param color Очистка цвета
+*/
+void SetLine_pr(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
+{
+	int j = 0;
+	for (int i = 0; i < point.SetApex(); i++) {
+		i < (point.SetApex() - 1) ? j++ : j = 0;
+		double const deltaX = abs(point.pointer_pr[i].x - point.pointer_pr[j].x);
+		double const deltaY = abs(point.pointer_pr[i].y - point.pointer_pr[j].y);
+		double x_1, x_2, y_1, y_2;
+		double x, y, xend, yend, s, d, inc1, inc2;
+		double check_x, check_y;
+		x_1 = point.pointer_pr[i].x;
+		x_2 = point.pointer_pr[j].x;
+		y_1 = point.pointer_pr[i].y;
+		y_2 = point.pointer_pr[j].y;
 
 		if (deltaX > deltaY) {
 			inc1 = 2 * deltaY;
@@ -461,13 +590,4 @@ WYBROSILI:
 KOHGFA:;
 }
 */
-void swaping(double& one, double& two) {
-	double three = one;
-	one = two;
-	two = three;
-}
-void swaping_int(int& one, int& two) {
-	int three = one;
-	one = two;
-	two = three;
-}
+

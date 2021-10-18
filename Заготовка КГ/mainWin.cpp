@@ -7,10 +7,12 @@ using namespace std;
 
 #include "Painter.h"
 #include "Point.h"
+#include "Camera.h"
 
 #define MAX_LOADSTRING 100
 #define ID_CREATES 160
 #define ID_FIRSTCHILD	161
+#define MOVEMENT 5
 // Глобальные переменные:
 HINSTANCE hInst;                                // текущий экземпляр
 WCHAR szTitle[MAX_LOADSTRING] = L"Компьютерная графика";;                  // Текст строки заголовка
@@ -25,7 +27,7 @@ BOOL                InitInstance(HINSTANCE, int);
 
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-INT_PTR  CALLBACK    Creates(HWND, UINT, WPARAM, LPARAM);
+//INT_PTR  CALLBACK    Creates(HWND, UINT, WPARAM, LPARAM);
 
 //Добавление отрисовщика
 
@@ -142,6 +144,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 
 Point point;
+Camera camera;
 
 //
 //  ФУНКЦИЯ: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -176,19 +179,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_KEYDOWN: {
         switch (wParam) {
             case VK_LEFT:  /* Обрабатывает клавишу LEFT ARROW (Стрелка влево). */
-
+                for (int i = 0; i < point.SetApex(); i++) {
+                    point.pointer[i].x -= MOVEMENT;
+                }
+                SendMessage(hWnd, WM_PAINT, NULL, NULL);
+                InvalidateRect(hWnd, 0, true);
             break;
 
             case VK_RIGHT: /* Обрабатывает клавишу RIGHT ARROW (Стрелка вправо). */
-
+                for (int i = 0; i < point.SetApex(); i++) {
+                    point.pointer[i].x += MOVEMENT;
+                }
+                SendMessage(hWnd, WM_PAINT, NULL, NULL);
+                InvalidateRect(hWnd, 0, true);
             break;
 
             case VK_UP: /* Обрабатывает клавишу UP ARROW (Стрелка вверх). */
-
+                for (int i = 0; i < point.SetApex(); i++) {
+                    point.pointer[i].y -= MOVEMENT;
+                }
+                SendMessage(hWnd, WM_PAINT, NULL, NULL);
+                InvalidateRect(hWnd, 0, true);
             break;
 
             case VK_DOWN: /* Обрабатывает клавишу DOWN ARROW (Стрелка вниз). */
-
+                for (int i = 0; i < point.SetApex(); i++) {
+                    point.pointer[i].y += MOVEMENT;
+                }
+                SendMessage(hWnd, WM_PAINT, NULL, NULL);
+                InvalidateRect(hWnd, 0, true);
             break;
 
             case VK_HOME: /* Обрабатывает клавишу HOME. */ 
@@ -214,7 +233,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 
                 break;
             }
-            default: break; /* Обрабатывает другие не символьные нажатия клавиш. */
+            default:
+                break; /* Обрабатывает другие не символьные нажатия клавиш. */
             }
         }
     case WM_COMMAND:
@@ -226,14 +246,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case ID_CREATES:
                 point.GetApex();
                 point.GetPoint();
+
+                //установка координат камеры относительно центра окна
+                camera.SetCoordCam(frameHeight, frameWidth);
+
                 SendMessage(hWnd, WM_PAINT, NULL, NULL);
                 InvalidateRect(hWnd, 0, true);
                 break;
+
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
+
             case IDM_EXIT:
-                
                 DestroyWindow(hWnd);
                 break;
             default:
@@ -248,24 +273,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // TODO: Добавьте сюда любой код прорисовки, использующий HDC...
 			frameWidth = ps.rcPaint.right;
 			frameHeight = ps.rcPaint.bottom;
+            
 			// Создать буфер кадра по размерам клиенсткой области
             frameBuffer = CreateFrameBuffer(frameWidth, frameHeight, { 255,255,255,0 });
-			
 
-			#define M_PI 3.14159265358979323846
-			double cnt = 5; //Коеффициент перемещения
-			double coef1 = 1.05; //Коеффициент увеличения
-			double coef2 = 0.95; //Коеффициент уменьшения
-			double coef3 = 10 * M_PI / 180; //Коеффициент вращения +
-			double coef4 = -10 * M_PI / 180; //Коеффициент вращения -
+            
 
 			// Рисование линии
-           
-			//V_FP1(frameBuffer, frameWidth, &pointer[0].x, { 0,255,0,0 });
-
-            // Мои добавления
-            //PresentFrame(hdc, frameWidth, frameHeight, frameBuffer, hWnd);
+            point.CentralProjection(camera);
             SetLine(frameBuffer, frameWidth, point, { 0,0,0,0 });
+            SetLine_pr(frameBuffer, frameWidth, point, { 100,100,100,0 });
             PresentFrame(hdc, frameWidth, frameHeight, frameBuffer, hWnd);
             EndPaint(hWnd, &ps);
         }
@@ -323,46 +340,6 @@ INT_PTR CALLBACK Creates(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 */
 
 
-/**
- * \brief Отрисовка кадра
- * \param width Ширина
- * \param height Высота
- * \param pixels Массив пикселов
- * \param hWnd Хендл окна, device context которого будет использован
- */
-void PresentFrame( HDC hdc, uint32_t width, uint32_t height, void* pixels, HWND hWnd)
-{
-	// Получить хендл на временный bit-map (4 байта на пиксель)
-	HBITMAP hBitMap = CreateBitmap(width, height, 1, 8 * 4, pixels);
-
-	// Временный DC для переноса bit-map'а
-	HDC srcHdc = CreateCompatibleDC(hdc);
-
-	// Связать bit-map с временным DC
-	SelectObject(srcHdc, hBitMap);
-
-	// Копировать содержимое временного DC в DC окна
-	BitBlt(
-		hdc,    // HDC назначения
-		0,      // Начало вставки по оси X
-		0,      // Начало вставки по оси Y
-		width,  // Ширина
-		height, // Высота
-		srcHdc, // Исходный HDC (из которого будут копироваться данные)
-		0,      // Начало считывания по оси X
-		0,      // Начало считывания по оси Y
-		SRCCOPY // Копировать
-	);
-	//Sleep(10000);
-	// Уничтожить bit-map
-	DeleteObject(hBitMap);
-	// Уничтодить временный DC
-	DeleteDC(srcHdc);
-	// Уничтодить DC
-    DeleteDC(hdc);
-	ReleaseDC(hWnd, hdc);
-	//PostQuitMessage(0);
-}
 
 
 
