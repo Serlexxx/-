@@ -1,6 +1,6 @@
 #pragma once
 
-#include <iostream>
+//#include <iostream>
 #include <Windows.h>
 #include <conio.h>
 #include <math.h>
@@ -34,6 +34,16 @@ void ClearFrame(RGBQUAD* buffer, uint32_t pixelCount, RGBQUAD clearColor = { 0,0
  */
 void SetPoint(RGBQUAD* buffer, int x, int y, uint32_t w, RGBQUAD color = { 0,0,0,0 });
 
+
+/**
+ * \brief Отрисовка кадра
+ * \param width Ширина
+ * \param height Высота
+ * \param pixels Массив пикселов
+ * \param hWnd Хендл окна, device context которого будет использован
+ */
+void PresentFrame(HDC hdc, uint32_t width, uint32_t height, void* pixels, HWND hWnd);
+
 /**
  * \brief Рисование линии (быстрый вариант, алгоритм Брэзенхема)
  * \param buffer Буфер кадра (указатель на массив)
@@ -44,17 +54,19 @@ void SetPoint(RGBQUAD* buffer, int x, int y, uint32_t w, RGBQUAD color = { 0,0,0
  * \param w Ширина фрейм-буфера
  * \param color Очистка цвета
  */
-void SetLine(RGBQUAD* buffer, uint32_t w, RGBQUAD color = { 0,0,0,0 });
+void SetLine(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color = { 0,0,0,0 });
 
-
- /**
-  * \brief Отрисовка кадра
-  * \param width Ширина
-  * \param height Высота
-  * \param pixels Массив пикселов
-  * \param hWnd Хендл окна, device context которого будет использован
-  */
-void PresentFrame(HDC hdc, uint32_t width, uint32_t height, void* pixels, HWND hWnd);
+/**
+ * \brief Рисование линии (быстрый вариант, алгоритм Брэзенхема)
+ * \param buffer Буфер кадра (указатель на массив)
+ * \param x0 Начальная точка (компонента X)
+ * \param y0 Начальная точка (компонента Y)
+ * \param x1 Конечная точка (компонента X)
+ * \param y1 Конечная точка (компонента Y)
+ * \param w Ширина фрейм-буфера
+ * \param color Очистка цвета
+ */
+void SetLine_pr(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color);
 
 /**
 * \param x Начальная точка(компонента X)
@@ -63,17 +75,14 @@ void PresentFrame(HDC hdc, uint32_t width, uint32_t height, void* pixels, HWND h
 * \param height Высота рабочей области
 * \param width Ширина рабочей области
 * */
-void MatrixMultiplication(double k, double height, double width);
+void MatrixMultiplication(double k, double height, double width, Point &point);
 
 /**
 * \param angle  Коэффициент поворота линии
 * \param height Высота рабочей области
 * \param width Ширина рабочей области
 * */
-void Rotate(double angle, double height, double width);
+void Rotate(double angle, double height, double width, Point&point);
 
-void V_FP1(RGBQUAD* buffer, uint32_t w, double* Pt, RGBQUAD color = { 0, 0, 0, 0 });
-
-void swaping(double& one, double& two);
-void swaping_int(int& one, int& two);
+//void V_FP1(RGBQUAD* buffer, uint32_t w, double* Pt, RGBQUAD color = { 0, 0, 0, 0 });
 

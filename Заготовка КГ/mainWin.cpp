@@ -1,19 +1,25 @@
 ﻿// Заготовка КГ.cpp : Определяет точку входа для приложения.
 //
-
+using namespace std;
+#include <iostream>
 #include "framework.h"
-#include "Painter.h"
 #include "Resource.h"
+
+#include "Painter.h"
 #include "Point.h"
+#include "Camera.h"
 
 #define MAX_LOADSTRING 100
-#define ID_CREATE 160
+#define ID_CREATES 160
 #define ID_FIRSTCHILD	161
+#define MOVEMENT 5
 // Глобальные переменные:
 HINSTANCE hInst;                                // текущий экземпляр
 WCHAR szTitle[MAX_LOADSTRING] = L"Компьютерная графика";;                  // Текст строки заголовка
 WCHAR szWindowClass[MAX_LOADSTRING] = L"Компьютерная графика";            // имя класса главного окна
 
+LPCWSTR szTitleEnter = {};                  // Текст строки заголовка
+WCHAR szWindowClassEnter[MAX_LOADSTRING] = L"Ввод координат";
 
 // Отправить объявления функций, включенных в этот модуль кода:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -21,8 +27,8 @@ BOOL                InitInstance(HINSTANCE, int);
 
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    Create(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK ChildProc(HWND, UINT, WPARAM, LPARAM);
+//INT_PTR  CALLBACK    Creates(HWND, UINT, WPARAM, LPARAM);
+
 //Добавление отрисовщика
 
 
@@ -137,7 +143,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 }
 
 
-
+Point point;
+Camera camera;
 
 //
 //  ФУНКЦИЯ: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -163,28 +170,94 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             AppendMenu(PopupMenu, MF_STRING, IDM_EXIT, L"Выход");
         }
-        AppendMenu(MainMenu, MF_STRING, ID_CREATE, L"&Создать");
+        AppendMenu(MainMenu, MF_STRING, ID_CREATES, L"&Создать");
         AppendMenu(MainMenu, MF_STRING, IDM_ABOUT, L"&О программе");
         SetMenu(hWnd, MainMenu);
-
-        
-
         }
 
         break;
+    case WM_KEYDOWN: {
+        switch (wParam) {
+            case VK_LEFT:  /* Обрабатывает клавишу LEFT ARROW (Стрелка влево). */
+                for (int i = 0; i < point.SetApex(); i++) {
+                    point.pointer[i].x -= MOVEMENT;
+                }
+                SendMessage(hWnd, WM_PAINT, NULL, NULL);
+                InvalidateRect(hWnd, 0, true);
+            break;
+
+            case VK_RIGHT: /* Обрабатывает клавишу RIGHT ARROW (Стрелка вправо). */
+                for (int i = 0; i < point.SetApex(); i++) {
+                    point.pointer[i].x += MOVEMENT;
+                }
+                SendMessage(hWnd, WM_PAINT, NULL, NULL);
+                InvalidateRect(hWnd, 0, true);
+            break;
+
+            case VK_UP: /* Обрабатывает клавишу UP ARROW (Стрелка вверх). */
+                for (int i = 0; i < point.SetApex(); i++) {
+                    point.pointer[i].y -= MOVEMENT;
+                }
+                SendMessage(hWnd, WM_PAINT, NULL, NULL);
+                InvalidateRect(hWnd, 0, true);
+            break;
+
+            case VK_DOWN: /* Обрабатывает клавишу DOWN ARROW (Стрелка вниз). */
+                for (int i = 0; i < point.SetApex(); i++) {
+                    point.pointer[i].y += MOVEMENT;
+                }
+                SendMessage(hWnd, WM_PAINT, NULL, NULL);
+                InvalidateRect(hWnd, 0, true);
+            break;
+
+            case VK_HOME: /* Обрабатывает клавишу HOME. */ 
+            {
+               
+
+                break;
+            }
+            case VK_END: /* Обрабатывает клавишу END. */
+
+            break;
+
+            case VK_INSERT: /* Обрабатывает клавишу INS. */
+
+            break;
+
+            case VK_DELETE: /* Обрабатывает клавишу DEL. */
+
+            break;
+
+            case VK_F1: /* Обрабатывает клавишу F2. */
+            {
+                
+                break;
+            }
+            default:
+                break; /* Обрабатывает другие не символьные нажатия клавиш. */
+            }
+        }
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
             // Разобрать выбор в меню:
             switch (wmId)
             {
-            case ID_CREATE:
+            case ID_CREATES:
+                point.GetApex();
+                point.GetPoint();
 
-                DialogBoxW(hInst, MAKEINTRESOURCE(IDR_MAINFRAME), hWnd, Create);
+                //установка координат камеры относительно центра окна
+                camera.SetCoordCam(frameHeight, frameWidth);
+
+                SendMessage(hWnd, WM_PAINT, NULL, NULL);
+                InvalidateRect(hWnd, 0, true);
                 break;
+
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
+
             case IDM_EXIT:
                 DestroyWindow(hWnd);
                 break;
@@ -200,28 +273,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // TODO: Добавьте сюда любой код прорисовки, использующий HDC...
 			frameWidth = ps.rcPaint.right;
 			frameHeight = ps.rcPaint.bottom;
+            
 			// Создать буфер кадра по размерам клиенсткой области
-			frameBuffer = CreateFrameBuffer(frameWidth, frameHeight);
-			
+            frameBuffer = CreateFrameBuffer(frameWidth, frameHeight, { 255,255,255,0 });
 
-			#define M_PI 3.14159265358979323846
-			double cnt = 5; //Коеффициент перемещения
-			double coef1 = 1.05; //Коеффициент увеличения
-			double coef2 = 0.95; //Коеффициент уменьшения
-			double coef3 = 10 * M_PI / 180; //Коеффициент вращения +
-			double coef4 = -10 * M_PI / 180; //Коеффициент вращения -
-
-
-
-
+            
 
 			// Рисование линии
-			
-			//V_FP1(frameBuffer, frameWidth, &pointer[0].x, { 0,255,0,0 });
-
-            // Мои добавления
+            point.CentralProjection(camera);
+            SetLine(frameBuffer, frameWidth, point, { 0,0,0,0 });
+            SetLine_pr(frameBuffer, frameWidth, point, { 100,100,100,0 });
             PresentFrame(hdc, frameWidth, frameHeight, frameBuffer, hWnd);
-            SetLine(frameBuffer, frameWidth, { 0,0,255,0 });
             EndPaint(hWnd, &ps);
         }
         break;
@@ -235,7 +297,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 // Обработчик сообщений для окна "О программе".
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR  CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
@@ -255,95 +317,29 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 // Обработчик сообщений для окна "Создать".
-INT_PTR CALLBACK Create(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+/*
+INT_PTR CALLBACK Creates(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
-
+   
     switch (message)
     {
     case WM_INITDIALOG:
-       
         return (INT_PTR)TRUE;
-    case WM_CREATE:
-        /*
-        WNDCLASS w;
-        memset(&w, 0, sizeof(WNDCLASS));
-        w.lpfnWndProc = ChildProc;
-        w.hInstance = hInst;
-        w.hbrBackground = WHITE_BRUSH;
-        w.lpszClassName = L"&ChildWClass";
-        w.hCursor = LoadCursor(NULL, IDC_CROSS);
-        RegisterClass(&w);
-        HWND child;
-        child = CreateWindowEx(0, L"&ChildWClass", (LPCTSTR)NULL,
-            WS_CHILD | WS_BORDER | WS_VISIBLE, 10, 10,
-            50, 50, hDlg, (HMENU)(int)(ID_FIRSTCHILD), hInst, NULL);
-        ShowWindow(child, SW_NORMAL);
-        UpdateWindow(child);
-        EndDialog(hDlg, LOWORD(wParam));
-        */
-        break;
+
     case WM_COMMAND:
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
-            
+            EndDialog(hDlg, LOWORD(wParam));
             return (INT_PTR)TRUE;
         }
-        
         break;
     }
     return (INT_PTR)FALSE;
 }
+*/
 
-LRESULT CALLBACK ChildProc(HWND hwnd, UINT Message, WPARAM wparam, LPARAM lparam)
-{
-    if (Message == WM_DESTROY)
-    {
-        return 0;
-    }
-    return DefWindowProc(hwnd, Message, wparam, lparam);
-}
 
-/**
- * \brief Отрисовка кадра
- * \param width Ширина
- * \param height Высота
- * \param pixels Массив пикселов
- * \param hWnd Хендл окна, device context которого будет использован
- */
-void PresentFrame( HDC hdc, uint32_t width, uint32_t height, void* pixels, HWND hWnd)
-{
-	// Получить хендл на временный bit-map (4 байта на пиксель)
-	HBITMAP hBitMap = CreateBitmap(width, height, 1, 8 * 4, pixels);
-
-	// Временный DC для переноса bit-map'а
-	HDC srcHdc = CreateCompatibleDC(hdc);
-
-	// Связать bit-map с временным DC
-	SelectObject(srcHdc, hBitMap);
-
-	// Копировать содержимое временного DC в DC окна
-	BitBlt(
-		hdc,    // HDC назначения
-		0,      // Начало вставки по оси X
-		0,      // Начало вставки по оси Y
-		width,  // Ширина
-		height, // Высота
-		srcHdc, // Исходный HDC (из которого будут копироваться данные)
-		0,      // Начало считывания по оси X
-		0,      // Начало считывания по оси Y
-		SRCCOPY // Копировать
-	);
-	//Sleep(10000);
-	// Уничтожить bit-map
-	DeleteObject(hBitMap);
-	// Уничтодить временный DC
-	DeleteDC(srcHdc);
-	// Уничтодить DC
-	//DeleteDC(hdc);
-	ReleaseDC(hWnd, hdc);
-	//PostQuitMessage(0);
-}
 
 
 

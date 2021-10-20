@@ -13,36 +13,60 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Исходные файлы\main">
+      <UniqueIdentifier>{6dec874f-a54d-4c46-bec0-dd8f671ee512}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\other">
+      <UniqueIdentifier>{437a1d62-7533-4ac2-a64c-72fec749cb25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\my">
+      <UniqueIdentifier>{d66661cd-67bd-4040-ad5f-f6cd12a79a26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\resource">
+      <UniqueIdentifier>{a9c09f3a-dfb7-458c-8cee-bdb33d54a132}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="Заготовка КГ.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="Painter.h">
-      <Filter>Исходные файлы</Filter>
+      <Filter>Файлы заголовков\my</Filter>
     </ClInclude>
     <ClInclude Include="Point.h">
-      <Filter>Исходные файлы</Filter>
+      <Filter>Файлы заголовков\my</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>Файлы заголовков\resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Файлы заголовков\resource</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Файлы заголовков\resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Заготовка КГ.h">
+      <Filter>Файлы заголовков\resource</Filter>
+    </ClInclude>
+    <ClInclude Include="VectorVunction.h">
+      <Filter>Файлы заголовков\my</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Файлы заголовков\my</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mainWin.cpp">
-      <Filter>Исходные файлы</Filter>
+      <Filter>Исходные файлы\main</Filter>
     </ClCompile>
     <ClCompile Include="Painter.cpp">
-      <Filter>Исходные файлы</Filter>
+      <Filter>Исходные файлы\other</Filter>
     </ClCompile>
     <ClCompile Include="POint.cpp">
-      <Filter>Исходные файлы</Filter>
+      <Filter>Исходные файлы\other</Filter>
+    </ClCompile>
+    <ClCompile Include="VectorFunction.cpp">
+      <Filter>Исходные файлы\other</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Исходные файлы\other</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
