@@ -1,33 +1,7 @@
 #include "Painter.h"
 using namespace std;
 
-/**
-* \brief Создание буфера кадра (двумерный массив структур RGBQUAD)
-* \param width Ширина буфера кадра
-* \param height Высота буфера кадра
-* \param clearColor Изначальный цвет
-* \return Указатель на массив
-*/
-RGBQUAD* CreateFrameBuffer(uint32_t width, uint32_t height, RGBQUAD clearColor)
-{
-	if (width != 0 && height != 0) {
-		RGBQUAD* frame = new RGBQUAD[width * height];
-		ClearFrame(frame, width * height, clearColor);
 
-		return frame;
-	}
-}
-
-/**
-* \brief Заполнение буфера изображения каким-то конкретным цветом
-* \param buffer Буфер кадра (указатель на массив)
-* \param pixelCount Кол-во пикселей в буфере
-* \param clearColor Цвет
-*/
-void ClearFrame(RGBQUAD* buffer, uint32_t pixelCount, RGBQUAD clearColor)
-{
-	fill_n(buffer, pixelCount, clearColor);
-}
 
 /**
 * \brief Установка пикселя
@@ -37,10 +11,15 @@ void ClearFrame(RGBQUAD* buffer, uint32_t pixelCount, RGBQUAD clearColor)
 * \param w Ширина фрейм-буфера
 * \param color Очистка цвета
 */
-void SetPoint(RGBQUAD* buffer, int x, int y, uint32_t w, RGBQUAD color)
+void SetPoint(BitmapBuffer* buffer, int x, int y, BitmapRGB color)
 {
-
-	buffer[(y * w) + x] = color;
+	if (y < static_cast<int>(buffer->GetHeight()) &&
+		y > 0 && x < static_cast<int>(buffer->GetWidth()) && x > 0)
+	{
+		(*buffer)[y][x].red = color.red;
+		(*buffer)[y][x].green = color.green;
+		(*buffer)[y][x].blue = color.blue;
+	}
 }
 
 /**
@@ -50,10 +29,13 @@ void SetPoint(RGBQUAD* buffer, int x, int y, uint32_t w, RGBQUAD color)
  * \param pixels Массив пикселов
  * \param hWnd Хендл окна, device context которого будет использован
  */
-void PresentFrame(HDC hdc, uint32_t width, uint32_t height, void* pixels, HWND hWnd)
+void PresentFrame( uint32_t width, uint32_t height, void* pixels, HWND hWnd)
 {
 	// Получить хендл на временный bit-map (4 байта на пиксель)
 	HBITMAP hBitMap = CreateBitmap(width, height, 1, 8 * 4, pixels);
+
+	// Получить device context окна
+	HDC hdc = GetDC(hWnd);
 
 	// Временный DC для переноса bit-map'а
 	HDC srcHdc = CreateCompatibleDC(hdc);
@@ -71,7 +53,7 @@ void PresentFrame(HDC hdc, uint32_t width, uint32_t height, void* pixels, HWND h
 		srcHdc, // Исходный HDC (из которого будут копироваться данные)
 		0,      // Начало считывания по оси X
 		0,      // Начало считывания по оси Y
-		SRCCOPY // Копировать
+		SRCCOPY // Копировать //было SRCCOPY, поменял на SRCAND
 	);
 	//Sleep(10000);
 	// Уничтожить bit-map
@@ -97,20 +79,37 @@ void PresentFrame(HDC hdc, uint32_t width, uint32_t height, void* pixels, HWND h
 * \param w Ширина фрейм-буфера
 * \param color Очистка цвета
 */
-void SetLine(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
+void SetLine(BitmapBuffer* buffer, Point* pointer, Apex&apex, Camera& camera, BitmapRGB color)
 {
+	int cnt = 0;
 	int j = 0;
-	for (int i = 0; i < point.SetApex(); i++) {
-		i < (point.SetApex() - 1) ? j++ : j = 0;
-		double const deltaX = abs(point.pointer[i].x - point.pointer[j].x);
-		double const deltaY = abs(point.pointer[i].y - point.pointer[j].y);
+	for (int i = 0; i < apex.GetApex(); i++) {
+
+		if (i < (apex.GetApex() - (apex.GetApex()/2)-1)) {
+			j++;
+			cnt++;
+		}
+		else {
+			j = 0;
+		}
+		if (i>=apex.GetApex()/2) {
+			if (i < apex.GetApex() - 1) {
+				j = i + 1;
+			}
+			else {
+				j = apex.GetApex() / 2;
+			}	
+		}
+
+		double const deltaX = abs(pointer[i].GetPoint('x') - pointer[j].GetPoint('x'));
+		double const deltaY = abs(pointer[i].GetPoint('y') - pointer[j].GetPoint('y'));
 		double x_1, x_2, y_1, y_2;
 		double x, y, xend, yend, s, d, inc1, inc2;
-		double check_x, check_y;
-		x_1 = point.pointer[i].x;
-		x_2 = point.pointer[j].x;
-		y_1 = point.pointer[i].y;
-		y_2 = point.pointer[j].y;
+		
+		x_1 = pointer[i].GetPoint('x');
+		x_2 = pointer[j].GetPoint('x');
+		y_1 = pointer[i].GetPoint('y');
+		y_2 = pointer[j].GetPoint('y');
 
 		if (deltaX > deltaY) {
 			inc1 = 2 * deltaY;
@@ -126,8 +125,7 @@ void SetLine(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
 				xend = x_1;
 				(y_1 > y_2) ? s = 1 : s = -1;
 			}
-
-			SetPoint(buffer, x, y, w, color);
+			SetPoint(buffer, x, y, color);
 			while (x < xend) {
 				x++;
 				if (d > 0) {
@@ -137,7 +135,7 @@ void SetLine(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
 				else
 					d += inc1;
 
-				SetPoint(buffer, x, y, w, color);
+				SetPoint(buffer, x, y, color);
 			}
 		}
 		else {
@@ -157,7 +155,7 @@ void SetLine(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
 				(x_1 > x_2) ? s = 1 : s = -1;
 			}
 
-			SetPoint(buffer, x, y, w, color);
+			SetPoint(buffer, x, y, color);
 			while (y < yend) {
 				y++;
 				if (d > 0) {
@@ -167,38 +165,22 @@ void SetLine(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
 				else
 					d += inc1;
 
-				SetPoint(buffer, x, y, w, color);
+				SetPoint(buffer, x, y, color);
 			}
 
 		}
 	}
-}
+	for (int i = 0; i < apex.GetApex()/2; i++) {
+		j = i + apex.GetApex() / 2;
 
-//to do:: объединить построении линий в один setline
-/**
-* \brief Рисование линии (быстрый вариант, алгоритм Брэзенхема)
-* \param buffer Буфер кадра (указатель на массив)
-* \param x0 Начальная точка (компонента X)
-* \param y0 Начальная точка (компонента Y)
-* \param x1 Конечная точка (компонента X)
-* \param y1 Конечная точка (компонента Y)
-* \param w Ширина фрейм-буфера
-* \param color Очистка цвета
-*/
-void SetLine_pr(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
-{
-	int j = 0;
-	for (int i = 0; i < point.SetApex(); i++) {
-		i < (point.SetApex() - 1) ? j++ : j = 0;
-		double const deltaX = abs(point.pointer_pr[i].x - point.pointer_pr[j].x);
-		double const deltaY = abs(point.pointer_pr[i].y - point.pointer_pr[j].y);
+		double const deltaX = abs(pointer[i].GetPoint('x') - pointer[j].GetPoint('x'));
+		double const deltaY = abs(pointer[i].GetPoint('y') - pointer[j].GetPoint('y'));
 		double x_1, x_2, y_1, y_2;
 		double x, y, xend, yend, s, d, inc1, inc2;
-		double check_x, check_y;
-		x_1 = point.pointer_pr[i].x;
-		x_2 = point.pointer_pr[j].x;
-		y_1 = point.pointer_pr[i].y;
-		y_2 = point.pointer_pr[j].y;
+		x_1 = pointer[i].GetPoint('x');
+		x_2 = pointer[j].GetPoint('x');
+		y_1 = pointer[i].GetPoint('y');
+		y_2 = pointer[j].GetPoint('y');
 
 		if (deltaX > deltaY) {
 			inc1 = 2 * deltaY;
@@ -215,7 +197,7 @@ void SetLine_pr(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
 				(y_1 > y_2) ? s = 1 : s = -1;
 			}
 
-			SetPoint(buffer, x, y, w, color);
+			SetPoint(buffer, x, y, color);
 			while (x < xend) {
 				x++;
 				if (d > 0) {
@@ -225,7 +207,7 @@ void SetLine_pr(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
 				else
 					d += inc1;
 
-				SetPoint(buffer, x, y, w, color);
+				SetPoint(buffer, x, y, color);
 			}
 		}
 		else {
@@ -245,7 +227,7 @@ void SetLine_pr(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
 				(x_1 > x_2) ? s = 1 : s = -1;
 			}
 
-			SetPoint(buffer, x, y, w, color);
+			SetPoint(buffer, x, y, color);
 			while (y < yend) {
 				y++;
 				if (d > 0) {
@@ -255,149 +237,146 @@ void SetLine_pr(RGBQUAD* buffer, uint32_t w, Point& point, RGBQUAD color)
 				else
 					d += inc1;
 
-				SetPoint(buffer, x, y, w, color);
+				SetPoint(buffer, x, y, color);
 			}
 
 		}
 	}
+	CentralProjection(camera, apex, pointer);
 }
 
-/**
-* \param k  Коэффициент масштабирования линии
-* \param height Высота рабочей области
-* \param width Ширина рабочей области
-* */
-void MatrixMultiplication(double k, double height, double width, Point & point)
-{
-	int check = 0;
-	struct Prod
-	{
-		double x, y;
-	};
 
-	Prod* ResProd = new Prod[point.SetApex()];
-	int diag = 0;
-	double cnt_apex = point.SetApex();
-	double Dx, Dy;
 
-	if (point.SetApex() % 2 == 1) {
-		while (cnt_apex != 1) {
-			cnt_apex -= 2;
-			diag++;
+
+void CentralProjection(Camera& camera, Apex& apex, Point* pointer) {
+	//new matrix
+	for (int i = 4; i < apex.GetApex(); i++) {
+		const int N = 3; //колва строк
+		const int M = 1; //колво столбцов результата и еще одной матрицы
+		double det = 0;
+		double funcMatrix[N][N] = { {camera.coordCam.y - pointer[i - 4].GetPoint('y'), pointer[i - 4].GetPoint('x') - camera.coordCam.x , 0},
+									{camera.coordCam.z - pointer[i - 4].GetPoint('z'), 0, pointer[i - 4].GetPoint('x') - camera.coordCam.x},
+									{0, 0, 1} };
+
+		double xyzMatrix[N][M] = { {((pointer[i - 4].GetPoint('x') * (camera.coordCam.y - pointer[i - 4].GetPoint('y'))) - (pointer[i - 4].GetPoint('y') * (camera.coordCam.x - pointer[i - 4].GetPoint('x'))))},
+								   {((pointer[i - 4].GetPoint('x') * (camera.coordCam.z - pointer[i - 4].GetPoint('z'))) - (pointer[i - 4].GetPoint('z') * (camera.coordCam.x - pointer[i - 4].GetPoint('x'))))},
+								   {0} };
+
+		double product[N][M] = { {0},
+								 {0},
+								 {0}, };
+
+		//создание двухмерного динамического массива
+		double** ptrMatrix = dynamic_array_alloc(N, N);
+		double** obt_Matrix = dynamic_array_alloc(N, N);
+		double** tMatrix = dynamic_array_alloc(N, N);
+		for (int count = 0; count < N; count++) {
+			for (int j = 0; j < N; j++) {
+				ptrMatrix[count][j] = funcMatrix[count][j];
+			}
 		}
-		double Dx_0 = (point.pointer[0].x + point.pointer[1].x) / 2;
-		double Dy_0 = (point.pointer[0].y + point.pointer[1].y) / 2;
-		Dx = (point.pointer[diag].x + Dx_0) / 2;
-		Dy = (point.pointer[diag].y + Dy_0) / 3;
-	}
-	else {
-		Dx = (point.pointer[0].x + point.pointer[point.SetApex() / 2].x) / 2;
-		Dy = (point.pointer[0].y + point.pointer[point.SetApex() / 2].y) / 2;
-	}
-	for (int cnt = 0; cnt < point.SetApex(); cnt++) {
 
+		det = Determinant(ptrMatrix, N);
 
-		double aMatrix[1][3] = { {point.pointer[cnt].x, point.pointer[cnt].y, 1} };
-		double bMatrix[3][3] = { {k, 0, 0}, {0, k, 0}, {0, 0, 1} };
-		double product[1][3] = { {0, 0, 0} };
-		for (int i = 0; i < 1; i++) {
-			for (int j = 0; j < 3; j++) {
-				for (int inner = 0; inner < 3; inner++) {
-					product[i][j] += floor(aMatrix[i][inner] * bMatrix[inner][j]);
+		if (det) {
+			TransnMatrixx(ptrMatrix, obt_Matrix, N);
+			for (int count_i = 0; count_i < N; count_i++) {
+				for (int count_j = 0; count_j < N; count_j++) {
+					int p = N - 1; //новый размер матрицы
+					double** temp_matrix = dynamic_array_alloc(p, p);
+					Get_matrix(obt_Matrix, N, temp_matrix, count_i, count_j);
+					tMatrix[count_i][count_j] = pow(-1.0, count_i + count_j + 2) * Determinant(temp_matrix, p) / det;
+					dynamic_array_free(temp_matrix, p);
 				}
-				//cout << product[i][j] << "  ";
 			}
-			//cout << endl;
-		}
-		ResProd[cnt].y = product[0][1];
-		ResProd[cnt].x = product[0][0];
 
-		/*
-		if ((abs(product[0][1]) > 10) && (abs(product[0][1]) < (height - 10)) && (abs(product[0][0]) > 10) && (abs(product[0][0]) < (width - 10))) {
-			check++;
-			ResProd[cnt].y = product[0][1];
-			ResProd[cnt].x = product[0][0];
+			for (int row = 0; row < N; row++) {
+				for (int col = 0; col < M; col++) {
+					for (int inner = 0; inner < N; inner++) {
+						product[row][col] += tMatrix[row][inner] * xyzMatrix[inner][col];
+					}
+				}
+			}
+			pointer[i].SetPoint('x', product[0][0]);
+			pointer[i].SetPoint('y', product[1][0]);
+			pointer[i].SetPoint('z', product[2][0]);
 		}
-	}
-	if (check == APEX) {
-		for (int i = 0; i < APEX; i++) {
-			cout << ResProd[i].x << " x " << ResProd[i].y << endl;
-			pointer[i].x = ResProd[i].x;
-			pointer[i].y = ResProd[i].y;
-		}
-	}
-	else {
-		cout << "EROR: Border Reached" << endl;
-		for (int i = 0; i < APEX; i++) {
-			cout << ResProd[i].x << " x " << ResProd[i].y << endl;
-		}
-		cout << endl;
-	}
-	*/
-	}
-	for (int i = 0; i < point.SetApex(); i++) {
-		cout << ResProd[i].x << " x " << ResProd[i].y << endl;
-		point.pointer[i].x = ResProd[i].x;
-		point.pointer[i].y = ResProd[i].y;
+		dynamic_array_free(ptrMatrix, N);
+		dynamic_array_free(obt_Matrix, N);
 	}
 }
 
-/**
-* \param angle  Коэффициент поворота линии
-* \param height Высота рабочей области
-* \param width Ширина рабочей области
-* */
-void Rotate(double angle, double height, double width, Point &point)
+
+double Determinant(double** T, int N)
 {
-	int cnt_apex = point.SetApex();
-	int diag = 0;
-	double Dx, Dy;
 
-	if (point.SetApex() % 2 == 1) {
-		while (cnt_apex != 1) {
-			cnt_apex -= 2;
-			diag++;
-		}
-		double Dx_0 = (point.pointer[0].x + point.pointer[1].x) / 2;
-		double Dy_0 = (point.pointer[0].y + point.pointer[1].y) / 2;
-		Dx = (point.pointer[diag].x + Dx_0) / 2;
-		Dy = (point.pointer[diag].y + Dy_0) / 3;
-	}
-	else {
-		Dx = (point.pointer[0].x + point.pointer[point.SetApex() / 2].x) / 2;
-		Dy = (point.pointer[0].y + point.pointer[point.SetApex() / 2].y) / 2;
-	}
-
-	struct RadPoints
+	double det__;
+	int sub_j, s;
+	double** subT;    // Субматрица как набор ссылок на исходную матрицу
+	switch (N)
 	{
-		double xR, yR;
-	};
-	RadPoints *massiv = new RadPoints[point.SetApex()];
-	int check = 0;
-
-	for (int i = 0; i < point.SetApex(); i++) {
-		double x = point.pointer[i].x;
-		double y = point.pointer[i].y;
-		//massiv[i].xR 
-		point.pointer[i].x = Dx + (x - Dx) * cos(angle) - (y - Dy) * sin(angle);
-		//massiv[i].yR 
-		point.pointer[i].y = Dy + (x - Dx) * sin(angle) + (y - Dy) * cos(angle);
-		/*
-		if ((abs(massiv[i].yR) > 10) && (abs(massiv[i].yR) < abs(width - 10)) && (abs(massiv[i].xR) > 10) && (abs(massiv[i].xR) < abs(height - 10))) {
-			check++;
-		}
-		*/
+	case 1:
+		return T[0][0];
+	case 2: {
+		double res = T[0][0] * T[1][1] - T[0][1] * T[1][0];
+		return res;
 	}
-	/*if (check == APEX) {
-		for (int i = 0; i < APEX; i++)
+	default:
+
+		if (N < 1) return nan("1");  // Некорректная матрица
+
+		subT = new double* [N - 1];  // Массив ссылок на столбцы субматрицы
+		det__ = 0;
+		s = 1;        // Знак минора
+		for (int i = 0; i < N; i++)  // Разложение по первому столбцу
 		{
-			pointer[i].x = massiv[i].xR;
-			pointer[i].y = massiv[i].yR;
+			sub_j = 0;
+			for (int j = 0; j < N; j++) {// Заполнение субматрицы ссылками на исходные столбцы 
+				if (i != j) {  // исключить i строку
+					subT[sub_j++] = T[j] + 1;  // здесь + 1 исключает первый столбец
+
+				}
+			}
+			det__ = det__ + s * T[i][0] * Determinant(subT, N - 1);
+			s = -s;
+		}
+		delete[] subT;
+		return det__;
+	};
+};
+
+double** dynamic_array_alloc(size_t N, size_t M) {
+	double** A = (double**)malloc(N * sizeof(double*));
+	for (int i = 0; i < N; i++)
+		A[i] = (double*)malloc(M * sizeof(double));
+	return A;
+}
+
+void dynamic_array_free(double** A, size_t N) {
+	for (int i = 0; i < N; i++)
+		free(A[i]);
+	free(A);
+}
+
+void Get_matrix(double** matrix, int n, double** temp_matrix, int indRow, int indCol) {
+	int ki = 0;
+	for (int i = 0; i < n; i++) {
+		if (i != indRow) {
+			for (int j = 0, kj = 0; j < n; j++) {
+				if (j != indCol) {
+					temp_matrix[ki][kj] = matrix[i][j];
+					kj++;
+				}
+			}
+			ki++;
 		}
 	}
-	else {
-		cout << "EROR: Border Reached" << endl;
-	}*/
+}
+
+void TransnMatrixx(double** matrix, double** tMatrix, int n) {
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
+			tMatrix[j][i] = matrix[i][j];
 }
 
 /**

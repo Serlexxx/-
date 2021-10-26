@@ -4,27 +4,20 @@
 #include "Camera.h"
 class Point 
 {
-	public: 	
-	// —труктура точки и массива точек фигуры
-	struct pointBrenz {
-		double x = 0, y = 0, z = 10;
-	};
-	pointBrenz* pointer = new pointBrenz[APEX];
+	public: 
+		Point* point;
+	Point();
+	~Point(); // деструктор
 
-	//структура проекционных точек фигуры
-	struct pointBrenz_pr {
-		double x = 0, y = 0, z = 0;
-	};
-	pointBrenz_pr* pointer_pr = new pointBrenz_pr[APEX];
-	float vectorLength = 0;
-	float ratio = 0;
-	void GetVectorLength(float x, float y, float z, Camera&camera);
-	void CentralProjection(Camera& camera);; //получает координату камеры по оси Z
-	void GetPoint();
-	void GetApex();
-	int SetApex() const;
+	//double vectorLength = 0;
+	//double ratioX = 0;
+	//double ratioY = 0;
+	//double ratioZ = 0;
+	
+
+	void SetPoint(char point, double coord);
+	double GetPoint(char point);
 private:
-	//  ол-во вершин фигуры
-	int APEX;
+	double x, y, z;
 };
 

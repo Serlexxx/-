@@ -139,21 +139,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BitmapBuffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Painter.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="VectorVunction.h" />
+    <ClInclude Include="Apex.h" />
     <ClInclude Include="Заготовка КГ.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BitmapBuffer.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="mainWin.cpp" />
     <ClCompile Include="Painter.cpp" />
     <ClCompile Include="POint.cpp" />
-    <ClCompile Include="VectorFunction.cpp" />
+    <ClCompile Include="Apex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Заготовка КГ.rc" />

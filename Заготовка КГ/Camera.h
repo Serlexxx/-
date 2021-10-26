@@ -1,16 +1,16 @@
 #pragma once
 #include <iostream>
-
+#include <math.h>
 class Camera {
 public:
 	struct coordCam
 	{
-		float x = 0; float  y = 0; float z = 0;
+		double x = 0; double  y = 0; double z = 0;
 	} coordCam;
-
-	void SetCoordCam(int height, int width);
+	double GetfFOV();
+	void SetCoordCam(double height, double width);
 private:
-	float fFOV = 3.1415 / 3;	//угол обзора
-	float fDepth = 30.f;		//дистанция обзора
+	double fFOV = 3.1415 / 2;	//угол обзора
+	double fDepth = 30.f;		//дистанция обзора
 	
 };

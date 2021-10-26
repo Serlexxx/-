@@ -2,12 +2,15 @@
 //
 using namespace std;
 #include <iostream>
+#include <sstream>
 #include "framework.h"
 #include "Resource.h"
 
+#include "BitmapBuffer.h"
 #include "Painter.h"
 #include "Point.h"
 #include "Camera.h"
+#include "Apex.h"
 
 #define MAX_LOADSTRING 100
 #define ID_CREATES 160
@@ -27,48 +30,44 @@ BOOL                InitInstance(HINSTANCE, int);
 
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-//INT_PTR  CALLBACK    Creates(HWND, UINT, WPARAM, LPARAM);
+
 
 //Добавление отрисовщика
-
-
-
-// Размеры кадра и указатель на массив структур RGBQUAD (буфер кадра)
-uint32_t frameWidth, frameHeight;
-RGBQUAD* frameBuffer;
+Camera camera;
+Apex apex(8);
+Point* point = NULL;
+BitmapBuffer frameBuffer;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+    _In_opt_ HINSTANCE hPrevInstance,
+    _In_ LPWSTR    lpCmdLine,
+    _In_ int       nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // TODO: Разместите код здесь.
 
+    
 
-		
 
-	
+
     // Инициализация глобальных строк
-    LoadStringW(hInstance, IDS_APP_TITLE, NULL, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_MY, NULL, MAX_LOADSTRING);
+    LoadString(hInstance, IDS_APP_TITLE, NULL, MAX_LOADSTRING);
+    LoadString(hInstance, IDC_MY, NULL, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
     // Выполнить инициализацию приложения:
-    if (!InitInstance (hInstance, nCmdShow))
+    if (!InitInstance(hInstance, nCmdShow))
     {
         return FALSE;
     }
-
-   
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_MY));
 
     MSG msg;
 
-    
+
 
     // Цикл основного сообщения:
     while (GetMessage(&msg, nullptr, 0, 0))
@@ -76,14 +75,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
         {
 
-			SendMessage(msg.hwnd, WM_PAINT, NULL, NULL);
+            SendMessage(msg.hwnd, WM_PAINT, NULL, NULL);
             TranslateMessage(&msg);
-			
+
             DispatchMessage(&msg);
         }
     }
 
-    return (int) msg.wParam;
+    
+   
+        
+
+    return (int)msg.wParam;
 }
 
 
@@ -99,17 +102,17 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MY));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_MY);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = WndProc;
+    wcex.cbClsExtra = 0;
+    wcex.cbWndExtra = 0;
+    wcex.hInstance = hInstance;
+    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MY));
+    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_MY);
+    wcex.lpszClassName = szWindowClass;
+    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
     return RegisterClassExW(&wcex);
 }
@@ -126,25 +129,24 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   hInst = hInstance; // Сохранить маркер экземпляра в глобальной переменной
+    hInst = hInstance; // Сохранить маркер экземпляра в глобальной переменной
+
+    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+
+    if (!hWnd)
+    {
+        return FALSE;
+    }
+
    
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
+    return TRUE;
 }
 
 
-Point point;
-Camera camera;
 
 //
 //  ФУНКЦИЯ: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -158,11 +160,26 @@ Camera camera;
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  
- 
     switch (message)
     {
     case WM_CREATE: {
+        point = (Point*)malloc(apex.GetApex() * sizeof(Point));
+        point[0].SetPoint('x', 100);
+        point[0].SetPoint('y', 100);
+        point[0].SetPoint('z', 100);
+
+        point[1].SetPoint('x', 200);
+        point[1].SetPoint('y', 100);
+        point[1].SetPoint('z', 100);
+
+        point[2].SetPoint('x', 150);
+        point[2].SetPoint('y', 200);
+        point[2].SetPoint('z', 100);
+
+        point[3].SetPoint('x', 50);
+        point[3].SetPoint('y', 200);
+        point[3].SetPoint('z', 100);
+        CentralProjection(camera, apex, point);
         HMENU MainMenu = CreateMenu();
         HMENU PopupMenu = CreatePopupMenu();
 
@@ -173,125 +190,114 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         AppendMenu(MainMenu, MF_STRING, ID_CREATES, L"&Создать");
         AppendMenu(MainMenu, MF_STRING, IDM_ABOUT, L"&О программе");
         SetMenu(hWnd, MainMenu);
-        }
-
+        
         break;
+    }
     case WM_KEYDOWN: {
         switch (wParam) {
-            case VK_LEFT:  /* Обрабатывает клавишу LEFT ARROW (Стрелка влево). */
-                for (int i = 0; i < point.SetApex(); i++) {
-                    point.pointer[i].x -= MOVEMENT;
-                }
-                SendMessage(hWnd, WM_PAINT, NULL, NULL);
-                InvalidateRect(hWnd, 0, true);
-            break;
+        case VK_LEFT:  /* Обрабатывает клавишу LEFT ARROW (Стрелка влево). */
+            for (int i = 0; i < apex.GetApex() - 4; i++) {
 
-            case VK_RIGHT: /* Обрабатывает клавишу RIGHT ARROW (Стрелка вправо). */
-                for (int i = 0; i < point.SetApex(); i++) {
-                    point.pointer[i].x += MOVEMENT;
-                }
-                SendMessage(hWnd, WM_PAINT, NULL, NULL);
-                InvalidateRect(hWnd, 0, true);
-            break;
-
-            case VK_UP: /* Обрабатывает клавишу UP ARROW (Стрелка вверх). */
-                for (int i = 0; i < point.SetApex(); i++) {
-                    point.pointer[i].y -= MOVEMENT;
-                }
-                SendMessage(hWnd, WM_PAINT, NULL, NULL);
-                InvalidateRect(hWnd, 0, true);
-            break;
-
-            case VK_DOWN: /* Обрабатывает клавишу DOWN ARROW (Стрелка вниз). */
-                for (int i = 0; i < point.SetApex(); i++) {
-                    point.pointer[i].y += MOVEMENT;
-                }
-                SendMessage(hWnd, WM_PAINT, NULL, NULL);
-                InvalidateRect(hWnd, 0, true);
-            break;
-
-            case VK_HOME: /* Обрабатывает клавишу HOME. */ 
-            {
-               
-
-                break;
+                point[i].SetPoint('x', point[i].GetPoint('x') - MOVEMENT);
             }
-            case VK_END: /* Обрабатывает клавишу END. */
-
+            
+            SendMessage(hWnd, WM_PAINT, NULL, NULL);
+            
             break;
 
-            case VK_INSERT: /* Обрабатывает клавишу INS. */
-
-            break;
-
-            case VK_DELETE: /* Обрабатывает клавишу DEL. */
-
-            break;
-
-            case VK_F1: /* Обрабатывает клавишу F2. */
-            {
-                
-                break;
+        case VK_RIGHT: /* Обрабатывает клавишу RIGHT ARROW (Стрелка вправо). */
+            for (int i = 0; i < apex.GetApex() - 4; i++) {
+                point[i].SetPoint('x', point[i].GetPoint('x') + MOVEMENT);
             }
-            default:
-                break; /* Обрабатывает другие не символьные нажатия клавиш. */
+            
+            SendMessage(hWnd, WM_PAINT, NULL, NULL);
+           
+            break;
+
+        case VK_UP: /* Обрабатывает клавишу UP ARROW (Стрелка вверх). */
+            for (int i = 0; i < apex.GetApex() - 4; i++) {
+                point[i].SetPoint('y', point[i].GetPoint('y') - MOVEMENT);
             }
+           
+            SendMessage(hWnd, WM_PAINT, NULL, NULL);
+          
+            break;
+
+        case VK_DOWN: /* Обрабатывает клавишу DOWN ARROW (Стрелка вниз). */
+            for (int i = 0; i < apex.GetApex() - 4; i++) {
+                point[i].SetPoint('y', point[i].GetPoint('y') + MOVEMENT);
+            }
+          
+            SendMessage(hWnd, WM_PAINT, NULL, NULL);
+        
+            break;
+
+        default:
+            break; /* Обрабатывает другие не символьные нажатия клавиш. */
         }
+    }
     case WM_COMMAND:
+    {
+        int wmId = LOWORD(wParam);
+        // Разобрать выбор в меню:
+        switch (wmId)
         {
-            int wmId = LOWORD(wParam);
-            // Разобрать выбор в меню:
-            switch (wmId)
-            {
-            case ID_CREATES:
-                point.GetApex();
-                point.GetPoint();
-
-                //установка координат камеры относительно центра окна
-                camera.SetCoordCam(frameHeight, frameWidth);
-
-                SendMessage(hWnd, WM_PAINT, NULL, NULL);
-                InvalidateRect(hWnd, 0, true);
-                break;
-
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
+        case ID_CREATES: {
+            free(point);
+            point = NULL;
+            break;
         }
-        break;
+        case IDM_ABOUT: {
+            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+            break;
+        }
+        case IDM_EXIT: {
+            DestroyWindow(hWnd);
+           
+            
+
+            break;
+        }
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
+        }
+    }
+    break;
     case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Добавьте сюда любой код прорисовки, использующий HDC...
-			frameWidth = ps.rcPaint.right;
-			frameHeight = ps.rcPaint.bottom;
-            
-			// Создать буфер кадра по размерам клиенсткой области
-            frameBuffer = CreateFrameBuffer(frameWidth, frameHeight, { 255,255,255,0 });
-
-            
-
-			// Рисование линии
-            point.CentralProjection(camera);
-            SetLine(frameBuffer, frameWidth, point, { 0,0,0,0 });
-            SetLine_pr(frameBuffer, frameWidth, point, { 100,100,100,0 });
-            PresentFrame(hdc, frameWidth, frameHeight, frameBuffer, hWnd);
-            EndPaint(hWnd, &ps);
-        }
+    {
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hWnd, &ps);
+        
+        
+        
+        
+        frameBuffer.Clear({ 0,0,0 });
+        if(point != NULL)
+        SetLine(&frameBuffer, point, apex, camera, { 0,255,0 });
+        
+        PresentFrame(frameBuffer.GetWidth(), frameBuffer.GetHeight(), frameBuffer.GetData(), hWnd);
+        EndPaint(hWnd, &ps);
+       
         break;
+    }
     case WM_DESTROY:
+       
         PostQuitMessage(0);
+
         break;
-    default:
+    case WM_SIZE:
+        RECT rect;
+       
+        GetClientRect(hWnd, &rect);
+
+        frameBuffer = BitmapBuffer(rect.right, rect.bottom, { 0, 0, 0 });
+        camera.SetCoordCam(rect.right, rect.bottom);
+        break;
+   
+    default: {
         return DefWindowProc(hWnd, message, wParam, lParam);
+
+    }
     }
     return 0;
 }
@@ -316,28 +322,6 @@ INT_PTR  CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return (INT_PTR)FALSE;
 }
 
-// Обработчик сообщений для окна "Создать".
-/*
-INT_PTR CALLBACK Creates(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
-   
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
-
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
-}
-*/
 
 
 
