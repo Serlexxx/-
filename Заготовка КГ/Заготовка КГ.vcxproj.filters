@@ -54,6 +54,18 @@
     <ClInclude Include="BitmapBuffer.h">
       <Filter>Файлы заголовков\my</Filter>
     </ClInclude>
+    <ClInclude Include="Raycasting.h">
+      <Filter>Файлы заголовков\my</Filter>
+    </ClInclude>
+    <ClInclude Include="Earth.h">
+      <Filter>Файлы заголовков\my</Filter>
+    </ClInclude>
+    <ClInclude Include="Data.h">
+      <Filter>Файлы заголовков\my</Filter>
+    </ClInclude>
+    <ClInclude Include="aloritms.h">
+      <Filter>Файлы заголовков\my</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mainWin.cpp">
@@ -72,6 +84,9 @@
       <Filter>Исходные файлы\other</Filter>
     </ClCompile>
     <ClCompile Include="BitmapBuffer.cpp">
+      <Filter>Исходные файлы\other</Filter>
+    </ClCompile>
+    <ClCompile Include="Raycasting.cpp">
       <Filter>Исходные файлы\other</Filter>
     </ClCompile>
   </ItemGroup>

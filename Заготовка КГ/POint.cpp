@@ -3,45 +3,50 @@
 #define PLUS_Y 200
 #define Z 0 //Кооридината проэцирующей плоскости
 
-Point::Point() {
-	
+PointBuffer::PointBuffer(int apex) {
+	point = (Point*)malloc(apex * sizeof(Point));
 }
 
 
-Point::~Point() {
-
+PointBuffer::~PointBuffer() {
+	free(point);
 }
 
 
 
-void Point::SetPoint(char point, double coord) {
-	switch (point)
+
+
+double PointBuffer::GetPoint(char point_) {
+	switch (point_)
 	{
 	case 'x':
-		x = coord;
+		return point->x;
 		break;
 	case 'y':
-		y = coord;
+		return point->y;
 		break;
 	case 'z':
-		z = coord;
+		return point->z;
 		break;
-
 	}
 }
 
-double Point::GetPoint(char point) {
-	switch (point)
-	{
-	case 'x':
-		return x;
-		break;
-	case 'y':
-		return y;
-		break;
-	case 'z':
-		return z;
-		break;
 
-	}
+Point& PointBuffer::operator[](int y)
+{
+	return this->point[y];
+}
+
+Facets::Facets(int apex) {
+	facet = (Facet*)malloc(apex * sizeof(Facet));
+}
+
+
+Facets::~Facets() {
+	free(facet);
+}
+
+Facet& Facets::operator[](int y)
+{
+	return this->facet[y];
 }

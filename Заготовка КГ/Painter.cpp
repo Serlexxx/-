@@ -1,6 +1,6 @@
 #include "Painter.h"
 using namespace std;
-
+#define PI 3.14159265
 
 
 /**
@@ -11,6 +11,8 @@ using namespace std;
 * \param w Ширина фрейм-буфера
 * \param color Очистка цвета
 */
+
+
 void SetPoint(BitmapBuffer* buffer, int x, int y, BitmapRGB color)
 {
 	if (y < static_cast<int>(buffer->GetHeight()) &&
@@ -21,6 +23,8 @@ void SetPoint(BitmapBuffer* buffer, int x, int y, BitmapRGB color)
 		(*buffer)[y][x].blue = color.blue;
 	}
 }
+
+
 
 /**
  * \brief Отрисовка кадра
@@ -66,8 +70,63 @@ void PresentFrame( uint32_t width, uint32_t height, void* pixels, HWND hWnd)
 	//PostQuitMessage(0);
 }
 
+/*
+* Двойной брензехем для 3D
+*/
 
+void PutLine3D(BitmapBuffer* buffer, PointBuffer& pointer, int i, int i1,  BitmapRGB color)
+{ //
+	int dx = abs(pointer[i1].x - pointer[i].x); // длины путей по коорд. осям
+	int dy = abs(pointer[i1].y - pointer[i].y);
+	int dz = abs(pointer[i1].z - pointer[i].z); // NB: dx>=dy>=dz !
 
+	int sx = (pointer[i1].x >= pointer[i].x) ? 1 : -1; // единичные направления движения
+	int sy = (pointer[i1].y >= pointer[i].y) ? 1 : -1;
+	int sz = (pointer[i1].z >= pointer[i].z) ? 1 : -1;
+
+	int d1, d2, d;
+	int dd1, dd2, dd;
+	int x, y, z, j;
+
+	//SetPoint(buffer, pointer[i].x, pointer[i].y, color); // вывод первой точки
+
+	d = (dy << 1) - dx;  // инициализация пары 'x'-'y'
+	d1 = dy << 1;
+	d2 = (dy - dx) << 1;
+
+	dd = (dz << 1) - dy; // инициализация пары 'y'-'z'
+	dd1 = dz << 1;
+	dd2 = (dz - dy) << 1;
+
+	x = pointer[i].x + sx;
+	y = pointer[i].y;
+	z = pointer[i].z;
+	for (j = 1; j <= dx; j++, x += sx)
+	{ // первый "брезенхем", в счётном цикле
+		if (d > 0)
+		{
+			d += d2;
+			y += sy;
+
+			// был выполнен шаг по средней оси - 'y'. 
+			// второй "брезенхнм"
+			if (dd > 0)
+			{
+				dd += dd2;
+				z += sz;
+			}
+			else dd += dd1;
+			// конец второго "брезенхема"
+
+		}
+		else d += d1;
+		// конец первого "брезенхема"
+
+		//SetPoint(buffer, x, y, color); // вывод очередной точки
+
+	};
+
+}
 
 /**
 * \brief Рисование линии (быстрый вариант, алгоритм Брэзенхема)
@@ -79,187 +138,395 @@ void PresentFrame( uint32_t width, uint32_t height, void* pixels, HWND hWnd)
 * \param w Ширина фрейм-буфера
 * \param color Очистка цвета
 */
-void SetLine(BitmapBuffer* buffer, Point* pointer, Apex&apex, Camera& camera, BitmapRGB color)
-{
-	int cnt = 0;
-	int j = 0;
-	for (int i = 0; i < apex.GetApex(); i++) {
 
-		if (i < (apex.GetApex() - (apex.GetApex()/2)-1)) {
-			j++;
-			cnt++;
-		}
-		else {
+void SetLine(BitmapBuffer* buffer, std::vector<std::vector<double>> coordsharow, BitmapRGB color)
+{
+	int j = 0;
+	for (int i = 0; i < coordsharow.size(); i++) {
+		j = i + 1;
+		if (j == coordsharow.size()) {
 			j = 0;
 		}
-		if (i>=apex.GetApex()/2) {
-			if (i < apex.GetApex() - 1) {
-				j = i + 1;
-			}
-			else {
-				j = apex.GetApex() / 2;
-			}	
-		}
-
-		double const deltaX = abs(pointer[i].GetPoint('x') - pointer[j].GetPoint('x'));
-		double const deltaY = abs(pointer[i].GetPoint('y') - pointer[j].GetPoint('y'));
+		double const deltaX = abs(coordsharow.at(i).at(0) - coordsharow.at(j).at(0));
+		double const deltaY = abs(coordsharow.at(i).at(1) - coordsharow.at(j).at(1));
 		double x_1, x_2, y_1, y_2;
 		double x, y, xend, yend, s, d, inc1, inc2;
 		
-		x_1 = pointer[i].GetPoint('x');
-		x_2 = pointer[j].GetPoint('x');
-		y_1 = pointer[i].GetPoint('y');
-		y_2 = pointer[j].GetPoint('y');
+		x_1 = coordsharow.at(i).at(0);
+		x_2 = coordsharow.at(j).at(0);
+		y_1 = coordsharow.at(i).at(1);
+		y_2 = coordsharow.at(j).at(1);
+		
+			if (deltaX > deltaY) {
+				inc1 = 2 * deltaY;
+				inc2 = 2 * (deltaY - deltaX);
+				d = 2 * deltaY - deltaX;
+				if (x_1 < x_2) {
+					x = x_1; y = y_1; xend = x_2;
+					(y_1 < y_2) ? s = 1 : s = -1;
+				}
+				else {
+					x = x_2;
+					y = y_2;
+					xend = x_1;
+					(y_1 > y_2) ? s = 1 : s = -1;
+				}
+				SetPoint(buffer, x, y, color);
+				while (x < xend) {
+					x++;
+					if (d > 0) {
+						y += s;
+						d += inc2;
+					}
+					else
+						d += inc1;
 
-		if (deltaX > deltaY) {
-			inc1 = 2 * deltaY;
-			inc2 = 2 * (deltaY - deltaX);
-			d = 2 * deltaY - deltaX;
-			if (x_1 < x_2) {
-				x = x_1; y = y_1; xend = x_2;
-				(y_1 < y_2) ? s = 1 : s = -1;
+					SetPoint(buffer, x, y, color);
+				}
 			}
 			else {
-				x = x_2;
-				y = y_2;
-				xend = x_1;
-				(y_1 > y_2) ? s = 1 : s = -1;
-			}
-			SetPoint(buffer, x, y, color);
-			while (x < xend) {
-				x++;
-				if (d > 0) {
-					y += s;
-					d += inc2;
+				inc1 = 2 * deltaX;
+				inc2 = 2 * (deltaX - deltaY);
+				d = 2 * deltaX - deltaY;
+				if (y_1 < y_2) {
+					y = y_1;
+					x = x_1;
+					yend = y_2;
+					(x_1 < x_2) ? s = 1 : s = -1;
 				}
-				else
-					d += inc1;
+				else {
+					y = y_2;
+					x = x_2;
+					yend = y_1;
+					(x_1 > x_2) ? s = 1 : s = -1;
+				}
 
 				SetPoint(buffer, x, y, color);
-			}
-		}
-		else {
-			inc1 = 2 * deltaX;
-			inc2 = 2 * (deltaX - deltaY);
-			d = 2 * deltaX - deltaY;
-			if (y_1 < y_2) {
-				y = y_1;
-				x = x_1;
-				yend = y_2;
-				(x_1 < x_2) ? s = 1 : s = -1;
-			}
-			else {
-				y = y_2;
-				x = x_2;
-				yend = y_1;
-				(x_1 > x_2) ? s = 1 : s = -1;
-			}
+				while (y < yend) {
+					y++;
+					if (d > 0) {
+						x += s;
+						d += inc2;
+					}
+					else
+						d += inc1;
 
-			SetPoint(buffer, x, y, color);
-			while (y < yend) {
-				y++;
-				if (d > 0) {
-					x += s;
-					d += inc2;
+					SetPoint(buffer, x, y, color);
 				}
-				else
-					d += inc1;
 
-				SetPoint(buffer, x, y, color);
 			}
-
-		}
 	}
-	for (int i = 0; i < apex.GetApex()/2; i++) {
-		j = i + apex.GetApex() / 2;
+	
+}
 
-		double const deltaX = abs(pointer[i].GetPoint('x') - pointer[j].GetPoint('x'));
-		double const deltaY = abs(pointer[i].GetPoint('y') - pointer[j].GetPoint('y'));
+void SetLine(BitmapBuffer* buffer, Earth* pointer, int apex, BitmapRGB color)
+{
+	int j = 0;
+	for (int i = 0; i < apex; i++) {
+		j = i + 1;
+		if (j == apex) {
+			j = 0;
+		}
+		double const deltaX = abs(pointer[i].coordEarth.x - pointer[j].coordEarth.x);
+		double const deltaY = abs(pointer[i].coordEarth.y - pointer[j].coordEarth.y);
 		double x_1, x_2, y_1, y_2;
 		double x, y, xend, yend, s, d, inc1, inc2;
-		x_1 = pointer[i].GetPoint('x');
-		x_2 = pointer[j].GetPoint('x');
-		y_1 = pointer[i].GetPoint('y');
-		y_2 = pointer[j].GetPoint('y');
 
-		if (deltaX > deltaY) {
-			inc1 = 2 * deltaY;
-			inc2 = 2 * (deltaY - deltaX);
-			d = 2 * deltaY - deltaX;
-			if (x_1 < x_2) {
-				x = x_1; y = y_1; xend = x_2;
-				(y_1 < y_2) ? s = 1 : s = -1;
+		x_1 = pointer[i].coordEarth.x;
+		x_2 = pointer[j].coordEarth.x;
+		y_1 = pointer[i].coordEarth.y;
+		y_2 = pointer[j].coordEarth.y;
+		
+			if (deltaX > deltaY) {
+				inc1 = 2 * deltaY;
+				inc2 = 2 * (deltaY - deltaX);
+				d = 2 * deltaY - deltaX;
+				if (x_1 < x_2) {
+					x = x_1; y = y_1; xend = x_2;
+					(y_1 < y_2) ? s = 1 : s = -1;
+				}
+				else {
+					x = x_2;
+					y = y_2;
+					xend = x_1;
+					(y_1 > y_2) ? s = 1 : s = -1;
+				}
+				///SetPoint(buffer, x, y, color);
+				while (x < xend) {
+					x++;
+					if (d > 0) {
+						y += s;
+						d += inc2;
+					}
+					else
+						d += inc1;
+
+					//SetPoint(buffer, x, y, color);
+				}
 			}
 			else {
-				x = x_2;
-				y = y_2;
-				xend = x_1;
-				(y_1 > y_2) ? s = 1 : s = -1;
-			}
-
-			SetPoint(buffer, x, y, color);
-			while (x < xend) {
-				x++;
-				if (d > 0) {
-					y += s;
-					d += inc2;
+				inc1 = 2 * deltaX;
+				inc2 = 2 * (deltaX - deltaY);
+				d = 2 * deltaX - deltaY;
+				if (y_1 < y_2) {
+					y = y_1;
+					x = x_1;
+					yend = y_2;
+					(x_1 < x_2) ? s = 1 : s = -1;
 				}
-				else
-					d += inc1;
-
-				SetPoint(buffer, x, y, color);
-			}
-		}
-		else {
-			inc1 = 2 * deltaX;
-			inc2 = 2 * (deltaX - deltaY);
-			d = 2 * deltaX - deltaY;
-			if (y_1 < y_2) {
-				y = y_1;
-				x = x_1;
-				yend = y_2;
-				(x_1 < x_2) ? s = 1 : s = -1;
-			}
-			else {
-				y = y_2;
-				x = x_2;
-				yend = y_1;
-				(x_1 > x_2) ? s = 1 : s = -1;
-			}
-
-			SetPoint(buffer, x, y, color);
-			while (y < yend) {
-				y++;
-				if (d > 0) {
-					x += s;
-					d += inc2;
+				else {
+					y = y_2;
+					x = x_2;
+					yend = y_1;
+					(x_1 > x_2) ? s = 1 : s = -1;
 				}
-				else
-					d += inc1;
 
-				SetPoint(buffer, x, y, color);
+				////SetPoint(buffer, x, y, color);
+				while (y < yend) {
+					y++;
+					if (d > 0) {
+						x += s;
+						d += inc2;
+					}
+					else
+						d += inc1;
+
+					//SetPoint(buffer, x, y, color);
+				}
+
 			}
 
-		}
 	}
-	CentralProjection(camera, apex, pointer);
+
+}
+
+/*
+std::vector <double> operator-(const std::vector<double>& a, const std::vector<double>& b)
+{
+	vector<double> c(a.size());
+	for (size_t i = 0; i < a.size(); ++i)
+		c[i] = a[i] - b[i];
+	return c;
+}
+
+*/
+
+double operator*(std::vector<double>& a, std::vector<double>& b)
+{ return a[0] * b[0] + a[1] * b[1]+a[2]*b[2]; }
+
+double abs(const std::vector<double>& a) {
+	double c = 0;
+	double sum = 0;
+	for (int i = 0; i < a.size(); i++)
+		sum += pow(a[i], 2);
+	c = sqrt(sum);
+	/*
+	if(a.size()==3)
+		 c = std::sqrt(pow(a[0], 2) + pow(a[1], 2) + pow(a[2], 2));
+	if(a.size()==2)
+		c = std::sqrt(pow(a[0], 2) + pow(a[1], 2));
+		*/
+	return c;
+}
+
+std::vector <double> operator*(const std::vector<double>& a, double k) {
+	std::vector<double> b = { a[0] * k, a[1] * k, a[2] * k };
+	return b;
+}
+
+std::vector <double> operator/(const std::vector<double>& a, double k) {
+	std::vector<double> b = { a[0] / k, a[1] / k, a[2] / k };
+	return b;
+}
+
+std::vector <double> operator+(const std::vector<double>& a, const std::vector<double>& b) {
+	if (a.size() != b.size())
+		throw("a.size() != b.size()"); // Или как-то иначе обработать разные размеры
+	vector<double> c(a.size());
+	for (size_t i = 0; i < a.size(); ++i)
+		c[i] = a[i] + b[i];
+	return c;
+}
+
+std::vector <double> operator^(const std::vector<double>& a, const std::vector<double>& b) {
+	std::vector<double> r = { a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0] };
+	return r;
+}
+
+inline double get_signum(double val) {
+	return val < 0 ? -1
+		: val == 0 ? 0
+		: 1;
+}
+
+
+void SetLine3D(BitmapBuffer* buffer, std::vector<std::vector<double>> coordsharow, int i, int i1, BitmapRGB color) {
+	if (round(coordsharow[i][0]) != round(coordsharow[i1][0])) {
+		vector <double> P1 = { coordsharow[i][0],  coordsharow[i][1],  coordsharow[i][2] };
+		vector <double> P2 = { coordsharow[i1][0], coordsharow[i1][1], coordsharow[i1][2] };
+
+		vector <double> D = { P2[0] - P1[0], P2[1] - P1[1], P2[2] - P1[2] };
+		double d, x1, x2, y1, y2, z1, z2, dx, dy, dz, ax, ay, az, sx, sy, sz, x, y, z, ind, zd, yd, xd, idx;
+		for (unsigned int i = 0; i < D.size(); i++)
+		{
+			if (D[i] < 0) {
+				D[i] *= -1; //make positive.    _OR_   use D[i] = abs(D[i]);
+				D[i]++;
+			}
+		}
+		d = *std::max_element(D.begin(), D.end());
+		std::vector <double>X;
+		std::vector <double>Y;
+		std::vector <double>Z;
+
+		x1 = P1[0];
+		y1 = P1[1];
+		z1 = P1[2];
+
+		x2 = P2[0];
+		y2 = P2[1];
+		z2 = P2[2];
+
+		dx = x2 - x1;
+		dy = y2 - y1;
+		dz = z2 - z1;
+
+		ax = abs(dx) * 2;
+		ay = abs(dy) * 2;
+		az = abs(dz) * 2;
+
+
+		sx = dx > 0 ? 1 : -1;
+		sy = dy > 0 ? 1 : -1;
+		sz = dz > 0 ? 1 : -1;
+
+		x = x1;
+		y = y1;
+		z = z1;
+		idx = 0;
+
+		if (ax >= max(ay, az)) {
+			yd = ay - ax / 2;
+			zd = az - ax / 2;
+
+			while (1) {
+				//to do трассировку в камеру
+
+
+				X.push_back(x);
+				Y.push_back(y);
+				Z.push_back(z);
+				idx = idx + 1;
+
+				if (round(x) == round(x2)) {
+					break;
+				}
+				if (yd >= 0) {
+					y = y + sy;
+					yd = yd - ax;
+				}
+				if (zd >= 0) {
+					z = z + sz;
+					zd = zd - ax;
+				}
+				x = x + sx;
+				yd = yd + ay;
+				zd = zd + az;
+			}
+		}
+		else
+		{
+			if (ay >= max(ax, az))
+			{
+				xd = ax - ay / 2;
+				zd = az - ay / 2;
+
+				while (1) {
+					//to do трассировку в камеру
+
+
+					X.push_back(x);
+					Y.push_back(y);
+					Z.push_back(z);
+					idx = idx + 1;
+
+					if (round(y) == round(y2))
+						break;
+
+					if (xd >= 0) {
+						x = x + sx;
+						xd = xd - ay;
+					}
+
+					if (zd >= 0) {
+						z = z + sz;
+						zd = zd - ay;
+					}
+					y = y + sy;
+					xd = xd + ax;
+					zd = zd + az;
+				}
+			}
+			else {
+				if (az >= max(ax, ay)) {
+					xd = ax - az / 2;
+					yd = ay - az / 2;
+
+					while (1) {
+						//to do трассировку в камеру
+
+						X.push_back(x);
+						Y.push_back(y);
+						Z.push_back(z);
+
+						idx = idx + 1;
+
+						if (round(z) == round(z2))
+							break;
+
+						if (xd >= 0) {
+							x = x + sx;
+							xd = xd - az;
+						}
+
+						if (yd >= 0) {
+							y = y + sy;
+							yd = yd - az;
+						}
+						z = z + sz;
+						xd = xd + ax;
+						yd = yd + ay;
+					}
+				}
+			}
+
+		}
+		for (int i = 0; i < X.size(); i++) {
+			SetPoint(buffer, X[i], Y[i], color);
+		}
+		X.clear();
+		Y.clear();
+		Z.clear();
+		X.shrink_to_fit();
+		Y.shrink_to_fit();
+		Z.shrink_to_fit();
+	}
 }
 
 
 
-
-void CentralProjection(Camera& camera, Apex& apex, Point* pointer) {
+void CentralProjection(Camera& camera, Apex& apex, PointBuffer& pointer) {
 	//new matrix
-	for (int i = 4; i < apex.GetApex(); i++) {
-		const int N = 3; //колва строк
+	for (int i = apex.GetApex()/2; i < apex.GetApex(); i++) {
+		const int N = 3; //колвo строк
 		const int M = 1; //колво столбцов результата и еще одной матрицы
 		double det = 0;
-		double funcMatrix[N][N] = { {camera.coordCam.y - pointer[i - 4].GetPoint('y'), pointer[i - 4].GetPoint('x') - camera.coordCam.x , 0},
-									{camera.coordCam.z - pointer[i - 4].GetPoint('z'), 0, pointer[i - 4].GetPoint('x') - camera.coordCam.x},
+		double funcMatrix[N][N] = { {camera.coordCam.y - pointer[i - apex.GetApex()/2].y, pointer[i - apex.GetApex()/2].x - camera.coordCam.x , 0},
+									{camera.coordCam.z - pointer[i - apex.GetApex()/2].z, 0, pointer[i - apex.GetApex()/2].x - camera.coordCam.x},
 									{0, 0, 1} };
 
-		double xyzMatrix[N][M] = { {((pointer[i - 4].GetPoint('x') * (camera.coordCam.y - pointer[i - 4].GetPoint('y'))) - (pointer[i - 4].GetPoint('y') * (camera.coordCam.x - pointer[i - 4].GetPoint('x'))))},
-								   {((pointer[i - 4].GetPoint('x') * (camera.coordCam.z - pointer[i - 4].GetPoint('z'))) - (pointer[i - 4].GetPoint('z') * (camera.coordCam.x - pointer[i - 4].GetPoint('x'))))},
+		double xyzMatrix[N][M] = { {((pointer[i - apex.GetApex()/2].x * (camera.coordCam.y - pointer[i - apex.GetApex()/2].y)) - (pointer[i - apex.GetApex()/2].y * (camera.coordCam.x - pointer[i - apex.GetApex()/2].x)))},
+								   {((pointer[i - apex.GetApex()/2].x * (camera.coordCam.z - pointer[i - apex.GetApex()/2].z)) - (pointer[i - apex.GetApex()/2].z * (camera.coordCam.x - pointer[i - apex.GetApex()/2].x)))},
 								   {0} };
 
 		double product[N][M] = { {0},
@@ -297,16 +564,16 @@ void CentralProjection(Camera& camera, Apex& apex, Point* pointer) {
 					}
 				}
 			}
-			pointer[i].SetPoint('x', product[0][0]);
-			pointer[i].SetPoint('y', product[1][0]);
-			pointer[i].SetPoint('z', product[2][0]);
+			pointer[i].x = product[0][0];
+			pointer[i].y = product[1][0];
+			pointer[i].z = product[2][0];
 		}
 		dynamic_array_free(ptrMatrix, N);
 		dynamic_array_free(obt_Matrix, N);
 	}
 }
 
-
+//поиск детерминанта
 double Determinant(double** T, int N)
 {
 
@@ -373,10 +640,146 @@ void Get_matrix(double** matrix, int n, double** temp_matrix, int indRow, int in
 	}
 }
 
+//транспонирование матрицы
 void TransnMatrixx(double** matrix, double** tMatrix, int n) {
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
 			tMatrix[j][i] = matrix[i][j];
+}
+
+bool proverka(BitmapBuffer* buffer, int x, int y, BitmapRGB color) {
+	if ((y < static_cast<int>(buffer->GetHeight())) &&
+		(y > 0) &&
+		(x < static_cast<int>(buffer->GetWidth())) &&
+		(x > 0)) {
+		if ((((*buffer)[y][x].red == color.red) &&
+			((*buffer)[y][x].green == color.green) &&
+			((*buffer)[y][x].blue == color.blue))) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void visovSketch(BitmapBuffer* buffer, int* xy, PointBuffer& point, BitmapRGB OldColor, BitmapRGB NewColor) {
+	int cnt[4];
+	int vse = 0;
+	for (int i = 0; i < 4; i++) {
+		cnt[i] = 0;
+	}
+	for (int i = 0; i < 4; i++) {
+		if (proverka(buffer, point[xy[i]].x, point[xy[i]].y, OldColor)) {
+			cnt[i]++;
+		}
+	}
+	for (int i = 0; i < 4; i++) {
+		vse +=cnt[i];
+	}
+	double Dot[2];
+	if (vse == 0 && cross(point,Dot,xy)) {
+		
+		//Sketch(buffer, Dot[0], Dot[1], point, OldColor, NewColor);
+	}
+}
+/*
+void visovTeni(BitmapBuffer* buffer, PointBuffer& pointer, Camera& cam, Earth* earth, Ten*many) {
+	int ind[2][3] = { {0, 1, 2}, {3, 1, 2} };
+	std::vector<double> O;
+	std::vector<double> Y = { cam.coordLight.x, cam.coordLight.y, cam.coordLight.z };
+	for (int i = 0; i < 8; i++) {
+		if (!proverka(buffer, pointer[i].x, pointer[i].y, { 255,255,255 })) {
+			for (int j = 0; j < 2; j++) {
+				std::vector<double> X = { pointer[i].x, pointer[i].y, pointer[i].z };
+				if (IntersectionWithEart(earth, (int*)ind[j], X, Y, O)) {
+					many[i].coordTen.x = O[0];
+					many[i].coordTen.y = O[1];
+					many[i].coordTen.z = O[2];
+					O.clear();
+				}
+			}
+			
+		}
+
+
+	}
+}
+*/
+/*
+void Sketch(BitmapBuffer* buffer, double x, double y, PointBuffer& point, BitmapRGB OldColor, BitmapRGB NewColor)
+{
+	std::vector<double> a;
+	std::vector<double> b;
+	std::vector<double> c;
+	std::vector<double> p;
+	p.push_back(x);
+	p.push_back(y);
+	int ind[12][3] = { {3,0,1},
+		{3,2,1},
+		{0,3,7},
+		{0,4,7},
+		{0,4,5},
+		{0,1,5},
+		{7,6,5},
+		{7,4,5},
+		{1,2,6},
+		{1,6,5},
+		{3,7,6},
+		{3,2,6} };
+	int cnt = 0;
+	for (int i = 0; i < 12; i++) {
+		
+		
+		a.push_back(point[ind[i][0]].x);
+		a.push_back(point[ind[i][0]].y);
+		
+		b.push_back(point[ind[i][1]].x);
+		b.push_back(point[ind[i][1]].y);
+		
+		c.push_back(point[ind[i][2]].x);
+		c.push_back(point[ind[i][2]].y);
+		if (pointInTriangle(p,a,b,c)) cnt++;
+		a.clear();
+		b.clear();
+		c.clear();
+	}
+	if ((cnt==3)&& (y < static_cast<int>(buffer->GetHeight())) &&
+		(y > 0) && 
+		(x < static_cast<int>(buffer->GetWidth())) && 
+		(x > 0))
+	{
+		int x1 = x;
+		int y1 = y;
+		if (((*buffer)[y1][x1].red == OldColor.red) &&
+			((*buffer)[y1][x1].green == OldColor.green) &&
+			((*buffer)[y1][x1].blue == OldColor.blue))
+		{
+			SetPoint(buffer, x, y,  NewColor);
+			Sketch(buffer, x + 1, y,  point, OldColor, NewColor);
+			Sketch(buffer, x - 1, y,  point, OldColor, NewColor);
+			Sketch(buffer, x, y - 1,  point, OldColor, NewColor);
+			Sketch(buffer, x, y + 1,  point, OldColor, NewColor);
+		}
+	}
+}
+
+*/
+
+bool pointInPolygon(PointBuffer& point, int x, int y)
+{
+
+	int   i, j = 4 - 1;
+	bool  oddNodes = 0;
+
+	for (i = 0; i < 4; i++) {
+		if ((point[i].y < y && point[j].y >= y
+			|| point[j].y < y && point[i].y >= y)
+			&& (point[i].x <= x || point[j].x <= x)) {
+			oddNodes ^= (point[i].x + (y - point[i].y) / (point[j].y - point[i].y) * (point[j].x - point[i].x) < x);
+		}
+		j = i;
+	}
+
+	return oddNodes;
 }
 
 /**
@@ -570,3 +973,280 @@ KOHGFA:;
 }
 */
 
+
+void Carryover(Apex& apex, PointBuffer& pointer, char ind, double angle) {
+	double Dot[2];
+	double Dx1, Dy1;
+	int a[4] = { 0,
+		1,
+		6,
+		7};
+	if (cross(pointer, Dot, a)) {
+		Dx1 = Dot[0];
+		Dy1 = Dot[1];
+		for (int i = 0; i < apex.GetApex(); i++) {
+			const int N = 4; //колвo строк
+			const int M = 1; //колво столбцов результата
+			double preCoord[N][M] = { {pointer[i].x},
+										{pointer[i].y}, 
+										{pointer[i].z}, 
+										{1} };
+			double CarryMatr[N][N] = { {1, 0 , 0, 0},
+										{0, 1 , 0, 0},
+										{0, 0 , 1, 0},
+										{-Dx1, -Dy1, 0, 1} };
+			double Prod[N][M] = { {0},
+									{0},
+									{0},
+									{0} };
+			for (int row = 0; row < N; row++) {
+				for (int col = 0; col < M; col++) {
+					for (int inner = 0; inner < N; inner++) {
+						Prod[row][col] += CarryMatr[inner][row] * preCoord[inner][col];
+					}
+				}
+			}
+			pointer[i].x = Prod[0][0];
+			pointer[i].y = Prod[1][0];
+			pointer[i].z = Prod[2][0];
+		}
+	}
+	
+	switch (ind)
+	{
+	case 'y':
+		//Ry(apex, pointer, angle);
+		break;
+	case 'x':
+		//Rx(apex, pointer, angle);
+		break;
+	case 'z':
+		//Rz(apex, pointer, angle);
+		break;
+	}
+	
+	for (int i = 0; i < apex.GetApex() ; i++) {
+		const int N = 4; //колвo строк
+		const int M = 1; //колво столбцов результата
+		double preCoord[N][M] = { {pointer[i].x},
+									{pointer[i].y},
+									{pointer[i].z},
+									{1} };
+		double CarryMatr[N][N] = { {1, 0 , 0, 0},
+									{0, 1 , 0, 0},
+									{0, 0 , 1, 0},
+									{Dx1, Dy1, 0, 1} };
+		double Prod[N][M] = { {0},
+								{0},
+								{0},
+								{0} };
+		for (int row = 0; row < N; row++) {
+			for (int col = 0; col < M; col++) {
+				for (int inner = 0; inner < N; inner++) {
+					Prod[row][col] += CarryMatr[inner][row] * preCoord[inner][col];
+				}
+			}
+		}
+		pointer[i].x = Prod[0][0];
+		pointer[i].y = Prod[1][0];
+		pointer[i].z = Prod[2][0];
+	}
+	
+	
+}
+
+bool cross(PointBuffer& pointer, double* dot, int* ind) {
+	double n;
+	if (pointer[ind[2]].y - pointer[ind[0]].y != 0) {  // a(y)
+		double q = (pointer[ind[2]].x - pointer[ind[0]].x) / (pointer[ind[0]].y - pointer[ind[2]].y);
+		double sn = (pointer[ind[1]].x - pointer[ind[3]].x) + (pointer[ind[1]].y - pointer[ind[3]].y) * q; if (!sn) { return 0; }  // c(x) + c(y)*q
+		double fn = (pointer[ind[1]].x - pointer[ind[0]].x) + (pointer[ind[1]].y - pointer[ind[0]].y) * q;   // b(x) + b(y)*q
+		n = fn / sn;
+	}
+	else {
+		if (!(pointer[ind[1]].y - pointer[ind[3]].y)) { return 0; }  // b(y)
+		n = (pointer[ind[1]].y - pointer[ind[0]].y) / (pointer[ind[1]].y - pointer[ind[3]].y);   // c(y)/b(y)
+	}
+	dot[0] = pointer[ind[1]].x + (pointer[ind[3]].x - pointer[ind[1]].x) * n;  // x3 + (-b(x))*n
+	dot[1] = pointer[ind[1]].y + (pointer[ind[3]].y - pointer[ind[1]].y) * n;  // y3 +(-b(y))*n
+	return 1;
+}
+
+
+
+void Rz(Apex& apex, PointBuffer& pointer, double angle) //поворот вокруг оси Z
+{
+	const int N = 4; //колвo строк
+	const int M = 1; //колво столбцов результата
+	for (int i = 0; i < apex.GetApex(); i++) {
+		double preCoord[N][M] = { {pointer[i].x},
+										{pointer[i].y},
+										{pointer[i].z},
+										{1} };
+		double CarryMatr[N][N] = { {cos(angle*PI/180), sin(angle * PI / 180) , 0, 0},
+									{-sin(angle * PI / 180), cos(angle * PI / 180) , 0, 0},
+									{0, 0 , 1, 0},
+									{0, 0, 0, 1} };
+		double Prod[N][M] = { {0},
+								{0},
+								{0},
+								{0} };
+		for (int row = 0; row < N; row++) {
+			for (int col = 0; col < M; col++) {
+				for (int inner = 0; inner < N; inner++) {
+					Prod[row][col] += CarryMatr[inner][row] * preCoord[inner][col];
+				}
+			}
+		}
+		pointer[i].x = Prod[0][0];
+		pointer[i].y = Prod[1][0];
+		pointer[i].z = Prod[2][0];
+	}
+}
+
+void Rz(Apex& apex, Ten* pointer, double angle) //поворот вокруг оси Z
+{
+	const int N = 4; //колвo строк
+	const int M = 1; //колво столбцов результата
+	for (int i = 0; i < apex.GetApex(); i++) {
+		double preCoord[N][M] = { {pointer[i].coordTen.x},
+										{pointer[i].coordTen.y},
+										{pointer[i].coordTen.z},
+										{1} };
+		double CarryMatr[N][N] = { {cos(angle * PI / 180), sin(angle * PI / 180) , 0, 0},
+									{-sin(angle * PI / 180), cos(angle * PI / 180) , 0, 0},
+									{0, 0 , 1, 0},
+									{0, 0, 0, 1} };
+		double Prod[N][M] = { {0},
+								{0},
+								{0},
+								{0} };
+		for (int row = 0; row < N; row++) {
+			for (int col = 0; col < M; col++) {
+				for (int inner = 0; inner < N; inner++) {
+					Prod[row][col] += CarryMatr[inner][row] * preCoord[inner][col];
+				}
+			}
+		}
+		pointer[i].coordTen.x = Prod[0][0];
+		pointer[i].coordTen.y = Prod[1][0];
+		pointer[i].coordTen.z = Prod[2][0];
+	}
+}
+
+void Rx(Apex& apex, Ten* pointer, double angle) //поворот вокруг оси X
+{
+	const int N = 4; //колвo строк
+	const int M = 1; //колво столбцов результата
+	for (int i = 0; i < apex.GetApex(); i++) {
+		double preCoord[N][M] = { {pointer[i].coordTen.x},
+										{pointer[i].coordTen.y},
+										{pointer[i].coordTen.z},
+										{1} };
+		double CarryMatr[N][N] = { {1, 0, 0, 0},
+									{0, cos(angle * PI / 180) , -sin(angle * PI / 180), 0},
+									{0, sin(angle * PI / 180) , cos(angle * PI / 180), 0},
+									{0, 0, 0, 1} };
+		double Prod[N][M] = { {0},
+								{0},
+								{0},
+								{0} };
+		for (int row = 0; row < N; row++) {
+			for (int col = 0; col < M; col++) {
+				for (int inner = 0; inner < N; inner++) {
+					Prod[row][col] += CarryMatr[inner][row] * preCoord[inner][col];
+				}
+			}
+		}
+		pointer[i].coordTen.x = Prod[0][0];
+		pointer[i].coordTen.y = Prod[1][0];
+		pointer[i].coordTen.z = Prod[2][0];
+	}
+}
+
+void Rx(Apex& apex, PointBuffer& pointer, double angle) //поворот вокруг оси X
+{
+	const int N = 4; //колвo строк
+	const int M = 1; //колво столбцов результата
+	for (int i = 0; i < apex.GetApex(); i++) {
+		double preCoord[N][M] = { {pointer[i].x},
+										{pointer[i].y},
+										{pointer[i].z},
+										{1} };
+		double CarryMatr[N][N] = { {1, 0, 0, 0},
+									{0, cos(angle * PI / 180) , -sin(angle * PI / 180), 0},
+									{0, sin(angle * PI / 180) , cos(angle * PI / 180), 0},
+									{0, 0, 0, 1} };
+		double Prod[N][M] = { {0},
+								{0},
+								{0},
+								{0} };
+		for (int row = 0; row < N; row++) {
+			for (int col = 0; col < M; col++) {
+				for (int inner = 0; inner < N; inner++) {
+					Prod[row][col] += CarryMatr[inner][row] * preCoord[inner][col];
+				}
+			}
+		}
+		pointer[i].x = Prod[0][0];
+		pointer[i].y = Prod[1][0];
+		pointer[i].z = Prod[2][0];
+	}
+}
+
+void Ry(Apex& apex, PointBuffer& pointer, double angle) //поворот вокруг оси Y
+{
+	const int N = 4; //колвo строк
+	const int M = 1; //колво столбцов результата
+	for (int i = 0; i < apex.GetApex() ; i++) {
+		double preCoord[N][M] = { {pointer[i].x},
+										{pointer[i].y},
+										{pointer[i].z},
+										{1} };
+		double CarryMatr[N][N] = { {cos(angle * PI / 180), 0, sin(angle * PI / 180), 0},
+									{0, 1 , 0, 0},
+									{-sin(angle * PI / 180), 0 , cos(angle * PI / 180), 0},
+									{0, 0, 0, 1} };
+		double Prod[N][M] = { {0},
+								{0},
+								{0},
+								{0} };
+		for (int row = 0; row < N; row++) {
+			for (int col = 0; col < M; col++) {
+				for (int inner = 0; inner < N; inner++) {
+					Prod[row][col] += CarryMatr[inner][row] * preCoord[inner][col];
+				}
+			}
+		}
+		pointer[i].x = Prod[0][0];
+		pointer[i].y = Prod[1][0];
+		pointer[i].z = Prod[2][0];
+	}
+}
+
+/*
+int classify(const std::vector<double>& p0, const std::vector<double>& p1, const std::vector<double>& p2)
+{
+	std::vector<double> a = p1 - p0;
+	std::vector<double> b = p2 - p0;
+	double sa = a[0] * b[1] - b[0] * a[1];
+	if (sa > 0.0)
+		return LEFT;
+	if (sa < 0.0)
+		return RIGHT;
+	if ((a[0] * b[0] < 0.0) || (a[1] * b[1] < 0.0))
+		return BEHIND;
+	if (abs(a) < abs(b))
+		return BEYOND;
+	if ((p0[0] == p2[0]) && (p0[1] == p2[1]))
+		return ORIGIN;
+	if ((p1[0] == p2[0]) && (p1[1] == p2[1]))
+		return DESTINATION;
+	return BETWEEN;
+}
+
+bool pointInTriangle(const std::vector<double>& p, const std::vector<double>& a, const std::vector<double>& b, const std::vector<double>& c)
+{
+	return ((classify(a, b, p) != LEFT) && (classify(b, c, p) != LEFT) && (classify(c, a, p) != LEFT));
+}
+*/

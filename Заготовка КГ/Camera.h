@@ -7,10 +7,15 @@ public:
 	{
 		double x = 0; double  y = 0; double z = 0;
 	} coordCam;
-	double GetfFOV();
-	void SetCoordCam(double height, double width);
+	struct coordLight
+	{
+		double x = 0; double  y = 0; double z = 0;
+	} coordLight;
+	
+	void SetCoordCam(double width, double height);
 private:
-	double fFOV = 3.1415 / 2;	//угол обзора
+	double fovx; // угол обзора по х
+	double fovy; // угол обзора по y
 	double fDepth = 30.f;		//дистанция обзора
 	
 };

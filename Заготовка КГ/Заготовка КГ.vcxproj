@@ -139,11 +139,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="aloritms.h" />
     <ClInclude Include="BitmapBuffer.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Data.h" />
+    <ClInclude Include="Earth.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Painter.h" />
     <ClInclude Include="Point.h" />
+    <ClInclude Include="Raycasting.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Apex.h" />
@@ -156,6 +160,7 @@
     <ClCompile Include="Painter.cpp" />
     <ClCompile Include="POint.cpp" />
     <ClCompile Include="Apex.cpp" />
+    <ClCompile Include="Raycasting.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Заготовка КГ.rc" />

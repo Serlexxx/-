@@ -1,6 +1,6 @@
 #include "BitmapBuffer.h"
 #include <algorithm>
-
+#include <exception>
 /**
 * \brief Конструктор по умолчанию (инициализирует пустой объект, без данных);
 */
@@ -105,7 +105,14 @@ BitmapBuffer& BitmapBuffer::operator=(BitmapBuffer&& other) noexcept
 */
 BitmapDataRGB* BitmapBuffer::operator[](int y)
 {
-	return this->pixelAccess_[y];
+	try
+	{
+		return this->pixelAccess_[y];
+	}
+	catch (...)
+	{
+		;
+	}
 }
 
 /**
