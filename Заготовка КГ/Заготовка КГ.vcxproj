@@ -146,11 +146,8 @@
     <ClInclude Include="Earth.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Painter.h" />
-    <ClInclude Include="Point.h" />
-    <ClInclude Include="Raycasting.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="Apex.h" />
     <ClInclude Include="Заготовка КГ.h" />
   </ItemGroup>
   <ItemGroup>
@@ -158,8 +155,6 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="mainWin.cpp" />
     <ClCompile Include="Painter.cpp" />
-    <ClCompile Include="POint.cpp" />
-    <ClCompile Include="Apex.cpp" />
     <ClCompile Include="Raycasting.cpp" />
   </ItemGroup>
   <ItemGroup>

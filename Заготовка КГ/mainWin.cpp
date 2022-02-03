@@ -12,10 +12,7 @@ using namespace std;
 
 #include "BitmapBuffer.h"
 #include "Painter.h"
-#include "Point.h"
 #include "Camera.h"
-#include "Apex.h"
-#include "Raycasting.h"
 #include "Earth.h"
 #include "Data.h"
 #include "aloritms.h"
@@ -197,8 +194,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (deltaY > 0) {
                 points1->Carryover('x', deltaY);
                 points2->Carryover('x', deltaY);
-                //Carryover(apex, point1, 'x', deltaY);
-                //Carryover(apex, point2, 'x', deltaY);
             }
             else {
                 if (deltaY < 0) {
@@ -479,10 +474,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     SetLine3D(&frameBuffer, shadow2, i, k, { 128,128,128 });
                 }
             }
-            
-           
-        
-            
+
             for (int i = 0; i < 6; i++) {
                 points1->EnterSketch(&frameBuffer, frameBuffer.GetWidth(), frameBuffer.GetHeight(), (int*)ind[i], { 255,255,255 }, { 120,150,100 });
                 points2->EnterSketch(&frameBuffer, frameBuffer.GetWidth(), frameBuffer.GetHeight(), (int*)ind[i], { 255,255,255 }, { 42,100,150 });
@@ -510,7 +502,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse.top = y;
         SetCursorPos(x, y);
         ClipCursor(&mouse);
-       // ShowCursor(0);
         earth[0].coordEarth.x = 0;
         earth[0].coordEarth.y = 0.7* rect.bottom;
         earth[0].coordEarth.z = -1000;
@@ -561,9 +552,3 @@ INT_PTR  CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     }
     return (INT_PTR)FALSE;
 }
-
-
-
-
-
-
