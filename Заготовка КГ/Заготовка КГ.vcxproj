@@ -139,21 +139,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="aloritms.h" />
+    <ClInclude Include="BitmapBuffer.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Data.h" />
+    <ClInclude Include="Earth.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Painter.h" />
-    <ClInclude Include="Point.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="VectorVunction.h" />
     <ClInclude Include="Заготовка КГ.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BitmapBuffer.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="mainWin.cpp" />
     <ClCompile Include="Painter.cpp" />
-    <ClCompile Include="POint.cpp" />
-    <ClCompile Include="VectorFunction.cpp" />
+    <ClCompile Include="Raycasting.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Заготовка КГ.rc" />

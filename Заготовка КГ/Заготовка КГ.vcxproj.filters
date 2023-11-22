@@ -30,9 +30,6 @@
     <ClInclude Include="Painter.h">
       <Filter>Файлы заголовков\my</Filter>
     </ClInclude>
-    <ClInclude Include="Point.h">
-      <Filter>Файлы заголовков\my</Filter>
-    </ClInclude>
     <ClInclude Include="framework.h">
       <Filter>Файлы заголовков\resource</Filter>
     </ClInclude>
@@ -45,10 +42,19 @@
     <ClInclude Include="Заготовка КГ.h">
       <Filter>Файлы заголовков\resource</Filter>
     </ClInclude>
-    <ClInclude Include="VectorVunction.h">
+    <ClInclude Include="Camera.h">
       <Filter>Файлы заголовков\my</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
+    <ClInclude Include="BitmapBuffer.h">
+      <Filter>Файлы заголовков\my</Filter>
+    </ClInclude>
+    <ClInclude Include="Earth.h">
+      <Filter>Файлы заголовков\my</Filter>
+    </ClInclude>
+    <ClInclude Include="Data.h">
+      <Filter>Файлы заголовков\my</Filter>
+    </ClInclude>
+    <ClInclude Include="aloritms.h">
       <Filter>Файлы заголовков\my</Filter>
     </ClInclude>
   </ItemGroup>
@@ -59,13 +65,13 @@
     <ClCompile Include="Painter.cpp">
       <Filter>Исходные файлы\other</Filter>
     </ClCompile>
-    <ClCompile Include="POint.cpp">
-      <Filter>Исходные файлы\other</Filter>
-    </ClCompile>
-    <ClCompile Include="VectorFunction.cpp">
-      <Filter>Исходные файлы\other</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
+      <Filter>Исходные файлы\other</Filter>
+    </ClCompile>
+    <ClCompile Include="BitmapBuffer.cpp">
+      <Filter>Исходные файлы\other</Filter>
+    </ClCompile>
+    <ClCompile Include="Raycasting.cpp">
       <Filter>Исходные файлы\other</Filter>
     </ClCompile>
   </ItemGroup>
